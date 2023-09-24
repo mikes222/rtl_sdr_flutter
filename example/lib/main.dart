@@ -38,6 +38,8 @@ class _MyAppState extends State<MyApp> {
 
   String? error;
 
+  bool amplitude = true;
+
   @override
   void initState() {
     super.initState();
@@ -216,7 +218,10 @@ class _MyAppState extends State<MyApp> {
               if (devices != null)
                 ...devices!
                     .map((e) => InkWell(
-                          child: Text(e),
+                          child: Text(
+                            e,
+                            style: const TextStyle(color: Colors.blue),
+                          ),
                           onTap: () {
                             start(e);
                           },
@@ -288,12 +293,22 @@ class _MyAppState extends State<MyApp> {
   Widget _getDataWidget(List<int> content, int length) {
     ++ages;
     normalized.clear();
+    int min = 255;
+    int max = 0;
     for (var element in content) {
-      normalized.add(element - 127);
+      if (amplitude) {
+        normalized.add(element);
+        if (min > element) min = element;
+        if (max < element) max = element;
+      } else {
+        normalized.add(element - 127);
+      }
     }
     return Column(
       children: [
-        Text("read $length ${content.length} bytes, iteration $ages"),
+        if (amplitude)
+          Text("read $length bytes, iteration $ages, min/max: $min/$max"),
+        if (!amplitude) Text("read $length bytes, iteration $ages"),
         Text("$normalized"),
       ],
     );

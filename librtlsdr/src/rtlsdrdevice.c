@@ -24,6 +24,7 @@
 #include "rtl-sdr-android.h"
 #include "SdrException.h"
 #include <string.h>
+#include <math.h>
 
 #define RUN_OR(command, exit_command) { \
     int cmd_result = command; \
@@ -43,7 +44,10 @@ typedef struct rtlsdr_android {
     /// if not zero, the packets will be trimmed by all items which are not exceeding the amplitude specified by this margin.
     /// no packet will be sent if the whole packet does not exceed the specified amplitude
     int margin;
+    u_int8_t *maglut;
 } rtlsdr_android_t;
+
+void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void *pointer);
 
 #define WITH_DEV(x) rtlsdr_android_t* x = (rtlsdr_android_t*) pointer
 
@@ -86,57 +90,139 @@ static int set_gain_by_perc(rtlsdr_dev_t *_dev, unsigned int percent) {
     return res;
 }
 
-/// called whenever data are received from the stick. If will call dataRevceived from java in turn.
+// Each I and Q value varies from 0 to 255. To get from the
+// unsigned (0-255) range you therefore subtract 127 from each I and Q, giving you
+// a range from -127 to +128.
+//
+// We want to improve things by subtracting 127.5, Well in integer arithmatic we can't
+// subtract half, so, we'll double everything up, and then compensate for the doubling
+// in the multiplier at the end.
+//
+// To decode the AM signal, you need the magnitude of the waveform, which is given by sqrt((I^2)+(Q^2))
+// The most this could be is if I&Q are both 128 (255 after doubling), so you could end up with a magnitude
+// of 360.624458.
+//
+// However, in reality the magnitude of the signal should never exceed the range -1 to +1, because the
+// values are I = rCos(w) and Q = rSin(w). Therefore the integer computed magnitude should (can?) never
+// exceed 128. Therefore we will oversaturate the magnitude a bit.
+//
+// If we scale up the results so that they range from 0 to 255 then we need to multiply
+// by 0.7071. Since the lowest number of i/q is 1 we will substract by sqrt(1^2+1^2)
+//
+void prepare_amplitude_calculation(void *pointer) {
+    WITH_DEV(dev);
+    dev->maglut = (uint8_t *) malloc(256 * 256);
+    for (int i = 0; i <= 255; i++) {
+        for (int q = 0; q <= 255; q++) {
+
+            int mag_i = (i * 2) - 255;
+            int mag_q = (q * 2) - 255;
+
+            int mag = (int) round(
+                    (sqrt((mag_i * mag_i) + (mag_q * mag_q)) * 0.71) - 1.4142);
+            dev->maglut[(i * 256) + q] = (uint8_t) (mag <= 255 ? mag : 255);
+//            if (i < 10 || i > 250 || (i > 125 && i < 130))
+//                if (q < 10 || q > 250 || (q > 125 && q < 130))
+//                    LOGI("i %d, q %d, mag %d", i, q, dev->maglut[(i * 256) + q]);
+        }
+    }
+
+}
+
+/// called whenever data are received from the stick. It will call dataRevceived from java in turn.
 void rtlsdr_callback(unsigned char *buf, uint32_t len, void *pointer) {
     WITH_DEV(dev);
     if (dev->rtl_dev == NULL) return;
 
-    if (dev->margin > 0) {
-        uint32_t firstIndex = 0;
-        int found = 0;
-        for (uint32_t i = 0; i < len; ++i) {
-            if (buf[i] < 127 - dev->margin || buf[i] > 127 + dev->margin) {
-                firstIndex = i;
-                found = 1;
-                break;
-            }
+    if (dev->maglut != NULL) {
+        // calculate the amplitudes
+        unsigned char *buf2 = malloc(len / 2);
+        unsigned char *m = buf2;
+        for (int i = 0; i < len; i += 2) {
+            *m++ = (dev->maglut[buf[i] * 256 + buf[i + 1]]);
         }
-        uint32_t lastIndex = len - 1;
-        if (found) {
-            for (uint32_t i = len; i > firstIndex; --i) {
-                if (buf[i] < 127 - dev->margin || buf[i] > 127 + dev->margin) {
-                    lastIndex = i;
+        len = len / 2;
+        if (dev->margin > 0) {
+            // User wants to trim the amplitudes by margin, remove them now
+            uint32_t firstIndex = 0;
+            int found = 0;
+            for (uint32_t i = 0; i < len; ++i) {
+                if (buf2[i] > dev->margin) {
+                    firstIndex = i;
+                    found = 1;
                     break;
                 }
             }
-            // todo send remaining items towards flutter
-            char* buf2 = malloc(lastIndex - firstIndex + 1);
-            memcpy(buf2, buf + firstIndex, lastIndex - firstIndex + 1);
-            len= lastIndex - firstIndex + 1;
-
-            JNIEnv *env;
-            int res = attachThread(&env);
-            jbyteArray jData = (*env)->NewByteArray(env, (jsize) len);
-            if (!jData) return;
-            (*env)->SetByteArrayRegion(env, jData, 0, (jsize) len, (jbyte *) buf2);
-
-            jclass clazz = (*env)->GetObjectClass(env, dev->instance);
-            jmethodID dataRead = (*env)->GetMethodID(env, clazz, "dataReceived", "([BI)V");
-
-            (*env)->CallVoidMethod(env, dev->instance, dataRead, jData, (jint) len);
-            (*env)->DeleteLocalRef(env, jData);
-            detatchThread(res);
-
-            free(buf2);
-            return;
-        } else {
-            // no relevant data, do not send it
-            return;
+            if (found) {
+                // if the loop does not find any amplitude exceeding the margin we take the firstIndex IQ tuple only.
+                uint32_t lastIndex = firstIndex;
+                for (uint32_t i = len - 1; i > firstIndex; --i) {
+                    if (buf2[i] > dev->margin) {
+                        lastIndex = i;
+                        break;
+                    }
+                }
+                // send remaining items towards flutter
+                len = lastIndex - firstIndex + 1;
+                send_to_java(dev, buf2 + firstIndex, len, pointer);
+                free(buf2);
+                return;
+            } else {
+                // no relevant data, do not send it
+                free(buf2);
+                return;
+            }
         }
+        send_to_java(dev, buf2, len, pointer);
+        free(buf2);
+        return;
     }
 
+    if (dev->margin == 0) {
+        // raw I/Q data
+        send_to_java(dev, buf, len, pointer);
+        return;
+    }
 
-    //LOGI("reading from stick %d bytes", len);
+    uint32_t firstIndex = 0;
+    int found = 0;
+    for (uint32_t i = 0; i < len; i += 2) {
+        if (buf[i] < 127 - dev->margin || buf[i] > 127 + dev->margin) {
+            firstIndex = i;
+            found = 1;
+            break;
+        }
+        if (buf[i + 1] < 127 - dev->margin || buf[i + 1] > 127 + dev->margin) {
+            firstIndex = i;
+            found = 1;
+            break;
+        }
+    }
+    if (found) {
+        // if the loop does not find any amplitude exceeding the margin we take the firstIndex IQ tuple only.
+        uint32_t lastIndex = firstIndex;
+        for (uint32_t i = len - 2; i > firstIndex; i -= 2) {
+            if (buf[i] < 127 - dev->margin || buf[i] > 127 + dev->margin) {
+                lastIndex = i;
+                break;
+            }
+            if (buf[i + 1] < 127 - dev->margin || buf[i + 1] > 127 + dev->margin) {
+                lastIndex = i;
+                break;
+            }
+        }
+        // send remaining items towards flutter
+        len = lastIndex - firstIndex + 2;
+        send_to_java(dev, buf + firstIndex, len, pointer);
+        return;
+    } else {
+        // no relevant data, do not send it
+        return;
+    }
+
+}
+
+void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void *pointer) {
     JNIEnv *env;
     int res = attachThread(&env);
     jbyteArray jData = (*env)->NewByteArray(env, (jsize) len);
@@ -246,6 +332,7 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_initialize(JNIEnv *env, jobject ins
     ptr->rtl_dev = NULL;
     ptr->instance = (*env)->NewGlobalRef(env, instance);
     ptr->margin = 0;
+    prepare_amplitude_calculation(ptr);
     return (jlong) ptr;
 }
 
@@ -256,6 +343,10 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_dispose(JNIEnv *env, jobject instan
         rtlsdr_close(dev->rtl_dev);
         dev->rtl_dev = NULL;
     }
+    if (dev->maglut != NULL) {
+        free(dev->maglut);
+    }
+    (*env)->DeleteGlobalRef(env, dev->instance);
     free((void *) dev);
 }
 
@@ -308,9 +399,9 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setSamplingrate(__attribute__((unus
 
 JNIEXPORT jboolean JNICALL
 Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunergainMode(__attribute__((unused)) JNIEnv *env,
-                                                         __attribute__((unused)) jobject thiz,
-                                                         jlong pointer,
-                                                         jint gain) {
+                                                              __attribute__((unused)) jobject thiz,
+                                                              jlong pointer,
+                                                              jint gain) {
     WITH_DEV(dev);
     if (0 == gain) {
         if (rtlsdr_set_tuner_gain_mode(dev->rtl_dev, 0) < 0) {
@@ -502,9 +593,10 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getFrequency(__attribute__((unused)
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getFrequencyCorrection(__attribute__((unused)) JNIEnv *env,
-                                                                    __attribute__((unused)) jobject thiz,
-                                                                    jlong pointer) {
+Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getFrequencyCorrection(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     return rtlsdr_get_freq_correction(dev->rtl_dev);
 }
@@ -533,14 +625,16 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getSamplingrate(__attribute__((unus
 
 JNIEXPORT jint JNICALL
 Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getMargin(__attribute__((unused)) JNIEnv *env,
-                                                       __attribute__((unused)) jobject thiz, jlong pointer) {
+                                                       __attribute__((unused)) jobject thiz,
+                                                       jlong pointer) {
     WITH_DEV(dev);
     return dev->margin;
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setMargin(__attribute__((unused)) JNIEnv *env,
-                                                       __attribute__((unused)) jobject thiz, jlong pointer,
+                                                       __attribute__((unused)) jobject thiz,
+                                                       jlong pointer,
                                                        jint margin) {
     WITH_DEV(dev);
     dev->margin = margin;

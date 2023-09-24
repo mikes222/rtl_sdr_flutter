@@ -54,10 +54,12 @@ class RtlSdrFlutter {
     return RtlSdrFlutterPlatform.instance.getFrequencyCorrection();
   }
 
+  /// Get crystal oscillator frequencies used for the RTL2832.
   Future<int> getRtlXtalFrequency() async {
     return RtlSdrFlutterPlatform.instance.getRtlXtalFrequency();
   }
 
+  /// Get crystal oscillator frequencies used for the tuner IC.
   Future<int> getTunerXtalFrequency() async {
     return RtlSdrFlutterPlatform.instance.getTunerXtalFrequency();
   }

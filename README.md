@@ -6,11 +6,26 @@ RTL-SDR is a very cheap dongle that can be used as a computer based radio scanne
 
 Android only currently! PullRequests are welcome!
 
-## Introduction
+This implementation accesses directly the USB stick via libusb library built into this plugin. No third-party software needed.
 
-Check the example application for the features.
 
-## Connect device via WLAN manually
+# Features
+
+Direct access of the USB dongle.
+
+Notification of USB device attach/detach event (optional)
+
+optional: trim data packets
+
+optional: calculate amplitudes and send them to flutter instead of I/Q pairs
+
+# Introduction
+
+Still beta version, documentation not yet done.
+
+Check the example application for the features. Also look into the github repository for the newest version. 
+
+## For debugging purposes: Connect device via WLAN manually
 
 First connect the device via usb
 
