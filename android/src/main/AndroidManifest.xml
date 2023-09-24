@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.mschwartz.rtl_sdr_flutter">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+    <!-- for recognizing usb events -->
+    <uses-feature android:name="android.hardware.usb.host" />
+
+    <application>
+
+        <service
+            android:name="com.mschwartz.rtl_sdr_flutter.UsbService"
+            android:foregroundServiceType="connectedDevice"
+            android:exported="false" />
+    </application>
+
+</manifest>
