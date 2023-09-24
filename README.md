@@ -1,6 +1,14 @@
 # rtl_sdr_flutter
 
-RTL-SDR Implementation for flutter
+RTL-SDR (Software defined radio) Implementation for flutter.
+
+RTL-SDR is a very cheap dongle that can be used as a computer based radio scanner for receiving live radio signals. Most dongles are based on the RTL2832U chipset. 
+
+Android only currently! PullRequests are welcome!
+
+## Introduction
+
+Check the example application for the features.
 
 ## Connect device via WLAN manually
 
@@ -18,14 +26,6 @@ Verify that the device is connected
 
     adb devices
 
-## Getting Started
+## Contribution
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
-
-For help getting started with Flutter development, view the
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
+Highly welcome. Just create Pull requests.
