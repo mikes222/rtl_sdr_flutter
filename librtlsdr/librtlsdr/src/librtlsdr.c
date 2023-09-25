@@ -2101,28 +2101,28 @@ int rtlsdr_open2(rtlsdr_dev_t **out_dev, int fd, const char * devicePath) {
 
 	reg = rtlsdr_i2c_read_reg(dev, E4K_I2C_ADDR, E4K_CHECK_ADDR);
 	if (reg == E4K_CHECK_VAL) {
-		LOGI("ERROR: Found Elonics E4000 tuner\n");
+		LOGI("Found Elonics E4000 tuner\n");
 		dev->tuner_type = RTLSDR_TUNER_E4000;
 		goto found;
 	}
 
 	reg = rtlsdr_i2c_read_reg(dev, FC0013_I2C_ADDR, FC0013_CHECK_ADDR);
 	if (reg == FC0013_CHECK_VAL) {
-		LOGI("ERROR: Found Fitipower FC0013 tuner\n");
+		LOGI("Found Fitipower FC0013 tuner\n");
 		dev->tuner_type = RTLSDR_TUNER_FC0013;
 		goto found;
 	}
 
 	reg = rtlsdr_i2c_read_reg(dev, R820T_I2C_ADDR, R82XX_CHECK_ADDR);
 	if (reg == R82XX_CHECK_VAL) {
-		LOGI("ERROR: Found Rafael Micro R820T tuner\n");
+		LOGI("Found Rafael Micro R820T tuner\n");
 		dev->tuner_type = RTLSDR_TUNER_R820T;
 		goto found;
 	}
 
 	reg = rtlsdr_i2c_read_reg(dev, R828D_I2C_ADDR, R82XX_CHECK_ADDR);
 	if (reg == R82XX_CHECK_VAL) {
-		LOGI("ERROR: Found Rafael Micro R828D tuner\n");
+		LOGI("Found Rafael Micro R828D tuner\n");
 		dev->tuner_type = RTLSDR_TUNER_R828D;
 		goto found;
 	}
@@ -2136,14 +2136,14 @@ int rtlsdr_open2(rtlsdr_dev_t **out_dev, int fd, const char * devicePath) {
 
 	reg = rtlsdr_i2c_read_reg(dev, FC2580_I2C_ADDR, FC2580_CHECK_ADDR);
 	if ((reg & 0x7f) == FC2580_CHECK_VAL) {
-		LOGI("ERROR: Found FCI 2580 tuner\n");
+		LOGI("Found FCI 2580 tuner\n");
 		dev->tuner_type = RTLSDR_TUNER_FC2580;
 		goto found;
 	}
 
 	reg = rtlsdr_i2c_read_reg(dev, FC0012_I2C_ADDR, FC0012_CHECK_ADDR);
 	if (reg == FC0012_CHECK_VAL) {
-		LOGI("ERROR: Found Fitipower FC0012 tuner\n");
+		LOGI("Found Fitipower FC0012 tuner\n");
 		rtlsdr_set_gpio_output(dev, 6);
 		dev->tuner_type = RTLSDR_TUNER_FC0012;
 		goto found;

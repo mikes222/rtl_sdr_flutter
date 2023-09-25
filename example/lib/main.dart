@@ -218,23 +218,23 @@ class _MyAppState extends State<MyApp> {
               Row(
                 children: [
                   MaterialButton(
-                    onPressed: amplitude ? () async {
-                      await _rtlSdrFlutterPlugin.setAmplitude(false);
-                      amplitude = false;
-                      setState(() {
-
-                      });
-                    } : null,
+                    onPressed: amplitude
+                        ? () async {
+                            await _rtlSdrFlutterPlugin.setAmplitude(false);
+                            amplitude = false;
+                            setState(() {});
+                          }
+                        : null,
                     child: const Text("Raw I/Q"),
                   ),
                   MaterialButton(
-                    onPressed: amplitude ? null : () async {
-                      await _rtlSdrFlutterPlugin.setAmplitude(true);
-                      amplitude = true;
-                      setState(() {
-
-                      });
-                    },
+                    onPressed: amplitude
+                        ? null
+                        : () async {
+                            await _rtlSdrFlutterPlugin.setAmplitude(true);
+                            amplitude = true;
+                            setState(() {});
+                          },
                     child: const Text("Amplitude"),
                   ),
                 ],
@@ -282,8 +282,16 @@ class _MyAppState extends State<MyApp> {
                   stream: _rtlSdrFlutterPlugin.listen(),
                   builder:
                       (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-                    if (snapshot.hasError) return const Text("Error");
-                    if (!snapshot.hasData) return const Text("Empty");
+                    if (snapshot.hasError)
+                      return Text(
+                        "Error ${snapshot.error}",
+                        style: const TextStyle(color: Colors.red),
+                      );
+                    if (!snapshot.hasData)
+                      return const Text(
+                        "No data",
+                        style: TextStyle(color: Colors.blue),
+                      );
                     Map<dynamic, dynamic> data = snapshot.data;
                     if (!data.containsKey("event")) {
                       return Text("${snapshot.data}");
@@ -310,30 +318,124 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  List<int> normalized = [];
-
   int ages = 0;
 
   Widget _getDataWidget(List<int> content, int length) {
     ++ages;
-    normalized.clear();
+    if (amplitude) {
+      return _buildAdsbData(content);
+    }
+    List<int> normalized = [];
+    for (var element in content.getRange(0, length < 1000 ? length : 1000)) {
+      normalized.add(element - 127);
+    }
+    return Column(
+      children: [
+        Text("read $length bytes, iteration $ages"),
+        Text("$normalized"),
+      ],
+    );
+  }
+
+  /// The default implementation of this example uses 1090MHz which is the frequency of the
+  /// ADSB transmitters of airplanes. ADSB uses pulse-code modulation so if the demo switches
+  /// from I/Q to amplitude-responses we try to find ADSB packets in the data. Of course no complete
+  /// implementation is done here since this is only a demo.
+  Widget _buildAdsbData(List<int> content) {
     int min = 255;
     int max = 0;
     for (var element in content) {
-      if (amplitude) {
-        normalized.add(element);
-        if (min > element) min = element;
-        if (max < element) max = element;
-      } else {
-        normalized.add(element - 127);
+      if (min > element) min = element;
+      if (max < element) max = element;
+    }
+    // The Mode S preamble is made of impulses of 0.5 microseconds at
+    // the following time offsets:
+    //
+    // 0   - 0.5 usec: first impulse.
+    // 1.0 - 1.5 usec: second impulse.
+    // 3.5 - 4   usec: third impulse.
+    // 4.5 - 5   usec: last impulse.
+    //
+    // Since we are sampling at 2 Mhz every sample in our magnitude vector
+    // is 0.5 usec, so the preamble will look like this, assuming there is
+    // an impulse at offset 0 in the array:
+    //
+    // 0   -----------------
+    // 1   -
+    // 2   ------------------
+    // 3   --
+    // 4   -
+    // 5   --
+    // 6   -
+    // 7   ------------------
+    // 8   --
+    // 9   -------------------
+    // 10  --
+    // 11  --
+    // 12  --
+    // 13  --
+    // 14  --
+    // 15  --
+    // After this preamble comes the data block of at most 112 bit
+    // 5 bit downlink format
+    // 3 bit transponder capability
+    // 24 bit A/C Address
+    // 56 bit ADS Message
+    // 24 bit parity
+    // We do analyze only the preamble since this is a demo and not a fully working ADSB receiver.
+    //
+    // see https://mode-s.org/decode/content/ads-b/1-basics.html
+    // see https://www.radartutorial.eu/13.ssr/sr24.en.html
+    List<_Adsb> adsbs = [];
+    for (int i = 0; i < content.length - 16; ++i) {
+      // first quick test if the data are a preamble for the ads-packets
+      if (content[i] > content[i + 1] &&
+          content[i + 1] < content[i + 2] &&
+          content[i + 2] > content[i + 3] &&
+          content[i + 4] < content[i + 7] &&
+          content[i + 5] < content[i + 7] &&
+          content[i + 6] < content[i + 7] &&
+          content[i + 7] > content[i + 8] &&
+          content[i + 8] < content[i + 9]) {
+        // The samples between the two spikes must be < than the average
+        // of the high spikes level. We don't test bits too near to
+        // the high levels as signals can be out of phase so part of the
+        // energy can be in the near samples
+        int high = ((content[i + 0] +
+                    content[i + 2] +
+                    content[i + 7] +
+                    content[i + 9]) /
+                6)
+            .round();
+
+        if (content[i + 4] >= high ||
+            content[i + 5] >= high ||
+            content[i + 11] >= high ||
+            content[i + 12] >= high ||
+            content[i + 13] >= high ||
+            content[i + 14] >= high) {
+          // not a valid preamble
+          continue;
+        }
+        // The next 56 or 112 bit could be the actual message
+        _Adsb adsb = _Adsb(index: i);
+        adsbs.add(adsb);
+        // do not test the rest of the (minimum valid) message for preambles
+        i += 16  + 56;
       }
     }
     return Column(
       children: [
-        if (amplitude)
-          Text("read $length bytes, iteration $ages, min/max: $min/$max"),
-        if (!amplitude) Text("read $length bytes, iteration $ages"),
-        Text("$normalized"),
+        Text(
+            "read ${content.length} bytes, iteration $ages, min/max: $min/$max"),
+        adsbs.isNotEmpty
+            ? Column(
+                children: adsbs
+                    .map((e) =>
+                        Text("Potential ADSB Mode-S at index ${e.index}"))
+                    .toList(),
+              )
+            : Text("$content"),
       ],
     );
   }
@@ -349,4 +451,12 @@ class _MyAppState extends State<MyApp> {
       this.error = error.toString();
     }
   }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+class _Adsb {
+  int index;
+
+  _Adsb({required this.index});
 }

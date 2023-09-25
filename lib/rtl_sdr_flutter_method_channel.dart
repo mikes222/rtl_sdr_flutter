@@ -44,7 +44,7 @@ class MethodChannelRtlSdrFlutter extends RtlSdrFlutterPlatform {
 
   @override
   Stream<Map<String, dynamic>> listen() {
-    return streamChannel.receiveBroadcastStream().map<Map<String, dynamic>>((event) => event);
+    return streamChannel.receiveBroadcastStream().map<Map<String, dynamic>>((element) => Map<String, dynamic>.from(element));
   }
 
   @override
