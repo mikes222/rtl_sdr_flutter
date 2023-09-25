@@ -39,7 +39,7 @@ public class RtlSdrDevice extends SdrDevice {
 
     private UsbDeviceConnection deviceConnection;
 
-    private Context context;
+    private final Context context;
 
 
     public RtlSdrDevice(Context context, StreamHandlerImpl streamHandler, UsbDevice usbDevice) {
@@ -131,6 +131,10 @@ public class RtlSdrDevice extends SdrDevice {
         setTunergainByPercentage(nativeHandler, tunergain);
     }
 
+    public boolean setAmplitude(boolean on) {
+        return setAmplitude(nativeHandler, on ? 1 : 0);
+    }
+
     private int openSessionAndGetFd() throws ExecutionException, InterruptedException {
         deviceConnection = UsbPermissionObtainer.obtainFdFor(context, usbDevice).get();
         if (deviceConnection == null) throw new RuntimeException("Could not get a connection");
@@ -201,4 +205,6 @@ public class RtlSdrDevice extends SdrDevice {
     private native int getMargin(long pointer);
 
     private native boolean setMargin(long pointer, int margin);
+
+    private native boolean setAmplitude(long pointer, int on);
 }

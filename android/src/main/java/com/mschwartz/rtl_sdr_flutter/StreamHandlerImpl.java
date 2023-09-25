@@ -14,7 +14,7 @@ public class StreamHandlerImpl implements EventChannel.StreamHandler  {
 
    private EventChannel.EventSink eventSink;
 
-   private Handler uiThreadHandler = new Handler(Looper.getMainLooper());
+   private final Handler uiThreadHandler = new Handler(Looper.getMainLooper());
 
    @Override
    public void onListen(Object arguments, EventChannel.EventSink events) {

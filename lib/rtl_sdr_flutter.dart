@@ -29,8 +29,11 @@ class RtlSdrFlutter {
     return RtlSdrFlutterPlatform.instance.stopService();
   }
 
-  /// Listens to the device.
-  Stream<dynamic> listen() {
+  /// Listens to the device. The stream returns a map with the following items:
+  ///  "event": "Data", "UsbAttached", "UsbDetached", "DeviceOpen", "DeviceClose"
+  /// "content": List<int>
+  /// "length": length of the content
+  Stream<Map<String, dynamic>> listen() {
     return RtlSdrFlutterPlatform.instance.listen();
   }
 
@@ -89,5 +92,9 @@ class RtlSdrFlutter {
   /// Sets the gain of the tuner. Zero means automatic gain
   Future<void> setTunergain(int tunergain) async {
     return RtlSdrFlutterPlatform.instance.setTunergain(tunergain);
+  }
+
+  Future<void> setAmplitude(bool on) async {
+    return RtlSdrFlutterPlatform.instance.setAmplitude(on);
   }
 }

@@ -137,4 +137,8 @@ public abstract class SdrDevice implements Serializable {
 	public int getTunergain() {
 		throw new RuntimeException("unimplemented");
 	}
+
+	public boolean setAmplitude(boolean on) {
+		throw new RuntimeException("unimplemented");
+	}
 }

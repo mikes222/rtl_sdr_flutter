@@ -30,7 +30,7 @@ class MockRtlSdrFlutterPlatform
   }
 
   @override
-  Stream listen() {
+  Stream<Map<String, dynamic>> listen() {
     // TODO: implement listen
     throw UnimplementedError();
   }
@@ -110,6 +110,12 @@ class MockRtlSdrFlutterPlatform
   @override
   Future<void> setTunergain(int tunergain) {
     // TODO: implement setTunergain
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> setAmplitude(bool on) {
+    // TODO: implement setAmplitude
     throw UnimplementedError();
   }
 }

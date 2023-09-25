@@ -43,8 +43,8 @@ class MethodChannelRtlSdrFlutter extends RtlSdrFlutterPlatform {
   }
 
   @override
-  Stream<dynamic> listen() {
-    return streamChannel.receiveBroadcastStream();
+  Stream<Map<String, dynamic>> listen() {
+    return streamChannel.receiveBroadcastStream().map<Map<String, dynamic>>((event) => event);
   }
 
   @override
@@ -100,5 +100,10 @@ class MethodChannelRtlSdrFlutter extends RtlSdrFlutterPlatform {
   @override
   Future<void> setTunergain(int tunergain) async {
     await methodChannel.invokeMethod("setTunergain", tunergain);
+  }
+
+  @override
+  Future<void> setAmplitude(bool on) async {
+    await methodChannel.invokeMethod("setAmplitude", on ? 1 : 0);
   }
 }

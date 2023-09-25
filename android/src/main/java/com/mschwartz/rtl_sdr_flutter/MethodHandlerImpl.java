@@ -243,6 +243,16 @@ class MethodHandlerImpl implements MethodCallHandler {
                     result.success("OK");
                     break;
                 }
+                case "setAmplitude": {
+                    if (mConnection == null) {
+                        result.error("hin6", "proble", "proble");
+                        return;
+                    }
+                    int gainMode = (int) call.arguments;
+                    mConnection.getSdrDevice().setAmplitude(gainMode > 0);
+                    result.success("OK");
+                    break;
+                }
                 default:
                     result.notImplemented();
                     break;

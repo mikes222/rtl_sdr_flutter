@@ -109,7 +109,7 @@ static int set_gain_by_perc(rtlsdr_dev_t *_dev, unsigned int percent) {
 // If we scale up the results so that they range from 0 to 255 then we need to multiply
 // by 0.7071. Since the lowest number of i/q is 1 we will substract by sqrt(1^2+1^2)
 //
-void prepare_amplitude_calculation(void *pointer) {
+void prepare_amplitude_calculation(jlong pointer) {
     WITH_DEV(dev);
     dev->maglut = (uint8_t *) malloc(256 * 256);
     for (int i = 0; i <= 255; i++) {
@@ -332,7 +332,8 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_initialize(JNIEnv *env, jobject ins
     ptr->rtl_dev = NULL;
     ptr->instance = (*env)->NewGlobalRef(env, instance);
     ptr->margin = 0;
-    prepare_amplitude_calculation(ptr);
+    ptr->maglut = NULL;
+    //prepare_amplitude_calculation(ptr);
     return (jlong) ptr;
 }
 
@@ -639,4 +640,22 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setMargin(__attribute__((unused)) J
     WITH_DEV(dev);
     dev->margin = margin;
     return JNI_TRUE;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setAmplitude(JNIEnv *env, jobject thiz, jlong pointer, jint on) {
+    WITH_DEV(dev);
+    if (on) {
+        if (dev->maglut)
+            return JNI_FALSE;
+        prepare_amplitude_calculation(pointer);
+        return JNI_TRUE;
+    } else {
+        if (dev->maglut) {
+            free(dev->maglut);
+            dev->maglut = NULL;
+            return JNI_TRUE;
+        }
+        return JNI_FALSE;
+    }
 }

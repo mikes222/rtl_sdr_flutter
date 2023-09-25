@@ -38,7 +38,7 @@ class _MyAppState extends State<MyApp> {
 
   String? error;
 
-  bool amplitude = true;
+  bool amplitude = false;
 
   @override
   void initState() {
@@ -215,6 +215,30 @@ class _MyAppState extends State<MyApp> {
               const Text(
                   "If margin is not zero, packets will be trimmed by amplitudes not exceeding the margin (e.g. with margin == 1 the leading and trailing bytes where the value is -1, 0 or +1 will be trimmed). This could save cpu since the trimming is done in C++",
                   style: TextStyle(fontSize: 10)),
+              Row(
+                children: [
+                  MaterialButton(
+                    onPressed: amplitude ? () async {
+                      await _rtlSdrFlutterPlugin.setAmplitude(false);
+                      amplitude = false;
+                      setState(() {
+
+                      });
+                    } : null,
+                    child: const Text("Raw I/Q"),
+                  ),
+                  MaterialButton(
+                    onPressed: amplitude ? null : () async {
+                      await _rtlSdrFlutterPlugin.setAmplitude(true);
+                      amplitude = true;
+                      setState(() {
+
+                      });
+                    },
+                    child: const Text("Amplitude"),
+                  ),
+                ],
+              ),
               if (devices != null)
                 ...devices!
                     .map((e) => InkWell(

@@ -48,7 +48,7 @@ abstract class RtlSdrFlutterPlatform extends PlatformInterface {
   }
 
   /// listen for events from the device
-  Stream<dynamic> listen() {
+  Stream<Map<String, dynamic>> listen() {
     throw UnimplementedError();
   }
 
@@ -93,6 +93,10 @@ abstract class RtlSdrFlutterPlatform extends PlatformInterface {
   }
 
   Future<void> setTunergain(int tunergain) async {
+    throw UnimplementedError();
+  }
+
+  Future<void> setAmplitude(bool on) async {
     throw UnimplementedError();
   }
 }
