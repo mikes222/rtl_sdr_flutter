@@ -35,7 +35,7 @@ import java.util.concurrent.ExecutionException;
 
 public class RtlSdrDevice extends SdrDevice {
     private final UsbDevice usbDevice;
-    private final long nativeHandler;
+    private Long nativeHandler;
 
     private UsbDeviceConnection deviceConnection;
 
@@ -72,6 +72,7 @@ public class RtlSdrDevice extends SdrDevice {
     @Override
     public void close() {
         close(nativeHandler);
+        nativeHandler = null;
     }
 
     @Override
@@ -145,7 +146,8 @@ public class RtlSdrDevice extends SdrDevice {
 
     @Override
     protected void finalize() throws Throwable {
-        dispose(nativeHandler);
+        if (nativeHandler != null)
+            dispose(nativeHandler);
         if (deviceConnection != null)
             deviceConnection.close();
         super.finalize();

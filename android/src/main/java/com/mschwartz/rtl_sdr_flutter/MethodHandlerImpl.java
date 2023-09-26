@@ -23,6 +23,9 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 
+/**
+ * This class receives all commands from flutter and processes them.
+ */
 class MethodHandlerImpl implements MethodCallHandler {
 
     @NonNull
@@ -45,25 +48,9 @@ class MethodHandlerImpl implements MethodCallHandler {
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
         try {
             switch (call.method) {
-                case "listDevices": {
-                    List<SdrDevice> devices = listDevices();
-                    List<String> names = new LinkedList<>();
-                    for (SdrDevice device : devices) {
-                        names.add(device.getName());
-                    }
-                    result.success(names);
-                    break;
-                }
                 case "startService": {
-//                    Intent intent = new Intent(context, UsbService.class);
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                        context.startForegroundService(intent);
-//                    } else {
-//                        context.startService(intent);
-//                    }
-                    //context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
                     if (serviceConnection != null) {
-                        result.error("hin11", "proble", "proble");
+                        result.error("1001", "Service already started", "Service already started");
                         return;
                     }
                     Intent intent = new Intent(context, UsbService.class);
@@ -74,21 +61,27 @@ class MethodHandlerImpl implements MethodCallHandler {
                     break;
                 }
                 case "stopService": {
-//                    Intent intent = new Intent(context, UsbService.class);
-//                    context.stopService(intent);
                     if (serviceConnection == null) {
-                        result.error("hin11", "proble", "proble");
+                        result.error("1002", "Service not started", "Cannot stop service if it not started");
                         return;
                     }
-                    Intent intent = new Intent(context, UsbService.class);
-                    context.unbindService(serviceConnection);
+                    serviceConnection.unbind(context);
                     serviceConnection = null;
                     result.success(null);
                     break;
                 }
+                case "listDevices": {
+                    List<SdrDevice> devices = listDevices();
+                    List<String> names = new LinkedList<>();
+                    for (SdrDevice device : devices) {
+                        names.add(device.getName());
+                    }
+                    result.success(names);
+                    break;
+                }
                 case "startServer": {
                     if (mConnection != null) {
-                        result.error("hin2", "proble", "proble");
+                        result.error("1003", "Device already selected", "Cannot select a device when there is already one selected");
                         return;
                     }
                     ArrayList args = (ArrayList) call.arguments;
@@ -104,25 +97,28 @@ class MethodHandlerImpl implements MethodCallHandler {
                         }
                     }
                     if (device == null) {
-                        result.error("hin3", "proble", "proble");
+                        result.error("1004", "Device not found", "Device not found");
                         return;
                     }
-                    startServer(device, sdrArguments);
+                    mConnection = new SdrServiceConnection(device, sdrArguments);
+                    Intent intent = new Intent(context, SdrService.class);
+                    context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
                     result.success("OK");
                     break;
                 }
                 case "stopServer": {
                     if (mConnection == null) {
-                        result.error("hin4", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
-                    stopServer();
+                    mConnection.unbind(context);
+                    mConnection = null;
                     result.success("OK");
                     break;
                 }
                 case "setFrequency": {
                     if (mConnection == null) {
-                        result.error("hin5", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     long frequency = (long) call.arguments;
@@ -132,7 +128,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "setFrequencyCorrection": {
                     if (mConnection == null) {
-                        result.error("hin5", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int ppm = (int) call.arguments;
@@ -142,7 +138,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "getFrequencyCorrection": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int frequency = mConnection.getSdrDevice().getFrequencyCorrection();
@@ -151,7 +147,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "setSamplingrate": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     long samplerate = (long) call.arguments;
@@ -161,7 +157,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "setGainMode": {
                     if (mConnection == null) {
-                        result.error("hin5", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int gainMode = (int) call.arguments;
@@ -171,7 +167,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "getFrequency": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     long frequency = mConnection.getSdrDevice().getFrequency();
@@ -180,7 +176,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "getRtlXtalFrequency": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     long frequency = mConnection.getSdrDevice().getRtlXtalFrequency();
@@ -189,7 +185,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "getTunerXtalFrequency": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     long frequency = mConnection.getSdrDevice().getTunerXtalFrequency();
@@ -198,7 +194,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "getSamplingrate": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     long frequency = mConnection.getSdrDevice().getSamplingrate();
@@ -207,7 +203,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "getTunergain": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int frequency = mConnection.getSdrDevice().getTunergain();
@@ -216,7 +212,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "setTunergain": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int gainMode = (int) call.arguments;
@@ -226,7 +222,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "getMargin": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int frequency = mConnection.getSdrDevice().getMargin();
@@ -235,7 +231,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "setMargin": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int gainMode = (int) call.arguments;
@@ -245,7 +241,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                 }
                 case "setAmplitude": {
                     if (mConnection == null) {
-                        result.error("hin6", "proble", "proble");
+                        result.error("1000", "No device selected", "Cannot perform the requested command without a selected device");
                         return;
                     }
                     int gainMode = (int) call.arguments;
@@ -274,23 +270,6 @@ class MethodHandlerImpl implements MethodCallHandler {
         return availableSdrDevices;
     }
 
-    public void startServer(final SdrDevice sdrDevice, SdrArguments sdrArguments) {
-        try {
-            //start the service
-            mConnection = new SdrServiceConnection(sdrDevice, sdrArguments);
-            Intent intent = new Intent(context, UsbService.class);
-            context.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        } catch (Exception e) {
-            mConnection = null;
-            throw e;
-        }
-    }
 
-    public void stopServer() {
-        if (mConnection != null && mConnection.isBound()) {
-            context.unbindService(mConnection);
-        }
-        mConnection = null;
-    }
 
 }

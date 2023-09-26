@@ -20,6 +20,11 @@ import com.sdrtouch.tools.Log;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * A service to detect if a usb device is attached or detached. The service is configured in AndroidManifest.xml
+ * This service will be bound/unbound at user/s request (see [{@link MethodHandlerImpl] startService/stopService).
+ * When bound the service returns a [UsbBinder] which can be used to communicate between the service and the StreamHandler/MethodHandler.
+ */
 public class UsbService extends Service {
 
     private final static int ONGOING_NOTIFICATION_ID = 437943911; // random id
@@ -27,7 +32,7 @@ public class UsbService extends Service {
     private final Set<UsbBinder> binders = new HashSet<>();
 
     public UsbService() {
-        Log.appendLine("UsbService constructor");
+        Log.appendLine("UsbService: constructor");
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -48,8 +53,15 @@ public class UsbService extends Service {
     }
 
     @Override
-    public void onDestroy() {
+    public boolean onUnbind(Intent intent) {
+        Log.appendLine("UsbService: onUnbind");
         stop();
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.appendLine("UsbService: onDestroy");
         super.onDestroy();
     }
 
@@ -105,7 +117,7 @@ public class UsbService extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                Log.appendLine("onReceive attached");
+                Log.appendLine("onReceive USB attached");
                 binders.forEach(UsbBinder::onUsbDeviceAttached);
             }
         }
@@ -117,7 +129,7 @@ public class UsbService extends Service {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                Log.appendLine("onReceive detached");
+                Log.appendLine("onReceive USB detached");
                 binders.forEach(UsbBinder::onUsbDeviceDetached);
             }
         }

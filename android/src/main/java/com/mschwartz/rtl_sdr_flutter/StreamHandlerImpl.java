@@ -10,6 +10,10 @@ import java.util.Map;
 
 import io.flutter.plugin.common.EventChannel;
 
+/**
+ * Implementation of the communication from java to flutter. The sink will be created/deleted whenever
+ * flutter starts/stops listening with the RtlSdrFlutter.listen() method.
+ */
 public class StreamHandlerImpl implements EventChannel.StreamHandler {
 
     private EventChannel.EventSink eventSink;

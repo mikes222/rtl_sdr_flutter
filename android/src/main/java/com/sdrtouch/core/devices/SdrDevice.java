@@ -32,6 +32,9 @@ import java.util.LinkedList;
 
 import kotlin.NotImplementedError;
 
+/**
+ * The base class for a device. The implementation could be either [HackRfSdrDevice] or [RtlSdrDevice].
+ */
 public abstract class SdrDevice implements Serializable {
 	private static final long serialVersionUID = 6042726358096490615L;
 	protected final StreamHandlerImpl streamHandler;

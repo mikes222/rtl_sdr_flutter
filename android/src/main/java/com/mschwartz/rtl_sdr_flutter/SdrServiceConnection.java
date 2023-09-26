@@ -1,6 +1,8 @@
 package com.mschwartz.rtl_sdr_flutter;
 
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
@@ -16,39 +18,43 @@ public class SdrServiceConnection implements ServiceConnection {
     @NonNull
     private final SdrDevice sdrDevice;
 
+    /**
+     * The startup-arguments
+     */
     @NonNull
     private final SdrArguments sdrArguments;
 
-    private volatile boolean isBound;
-
-    private UsbBinder binder;
+    private SdrBinder binder;
 
     public  SdrServiceConnection(@NonNull SdrDevice sdrDevice, @NonNull SdrArguments sdrArguments) {
         Check.isNotNull(sdrDevice);
         Check.isNotNull(sdrArguments);
         this.sdrDevice = sdrDevice;
         this.sdrArguments = sdrArguments;
-        this.isBound = false;
     }
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder ibinder) {
         Log.appendLine("SdrServiceConnection: onServiceConnnected");
-        isBound = true;
-        binder = (UsbBinder) ibinder;
+        binder = (SdrBinder) ibinder;
         binder.startWithDevice(sdrDevice, sdrArguments);
+    }
+
+    public void unbind(Context context) {
+        binder.stopWithDevice(sdrDevice);
+        binder = null;
+        context.unbindService(this);
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
         Log.appendLine("SdrServiceConnection: onServiceDisconnected");
-        binder.stopWithDevice(sdrDevice);
+//        binder.stopWithDevice(sdrDevice);
         binder = null;
-        isBound = false;
     }
 
     public boolean isBound() {
-        return isBound;
+        return binder != null;
     }
 
     public @NonNull SdrDevice getSdrDevice() {

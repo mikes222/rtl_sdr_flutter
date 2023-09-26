@@ -27,7 +27,10 @@ import com.mschwartz.rtl_sdr_flutter.StreamHandlerImpl;
 import java.util.List;
 
 public interface SdrDeviceProvider {
+
 	List<SdrDevice> listDevices(Context ctx, StreamHandlerImpl streamHandler, boolean forceRoot);
+
 	String getName();
+
 	boolean loadNativeLibraries();
 }

@@ -259,6 +259,7 @@ class _MyAppState extends State<MyApp> {
               MaterialButton(
                 onPressed: () {
                   _rtlSdrFlutterPlugin.stopServer(devices?.first ?? "unknown");
+                  amplitude = false;
                 },
                 child: const Text("Stop server"),
               ),
@@ -282,16 +283,18 @@ class _MyAppState extends State<MyApp> {
                   stream: _rtlSdrFlutterPlugin.listen(),
                   builder:
                       (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-                    if (snapshot.hasError)
+                    if (snapshot.hasError) {
                       return Text(
                         "Error ${snapshot.error}",
                         style: const TextStyle(color: Colors.red),
                       );
-                    if (!snapshot.hasData)
+                    }
+                    if (!snapshot.hasData) {
                       return const Text(
                         "No data",
                         style: TextStyle(color: Colors.blue),
                       );
+                    }
                     Map<dynamic, dynamic> data = snapshot.data;
                     if (!data.containsKey("event")) {
                       return Text("${snapshot.data}");

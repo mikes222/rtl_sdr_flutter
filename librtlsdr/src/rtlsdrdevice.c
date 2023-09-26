@@ -49,6 +49,8 @@ typedef struct rtlsdr_android {
 
 void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void *pointer);
 
+void close(JNIEnv *env, rtlsdr_android_t* dev);
+
 #define WITH_DEV(x) rtlsdr_android_t* x = (rtlsdr_android_t*) pointer
 
 void initialize(JNIEnv *env) {
@@ -309,8 +311,7 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz
 //            jmethodID announceOnClose = (*env)->GetMethodID(env, clazz, "announceOnClose", "()V"));
 //    EXCEPT_DO((*env)->CallVoidMethod(env, thiz, announceOnClose), succesful = 0);
 
-    dev->rtl_dev = NULL;
-    rtlsdr_close(device);
+    close(env, dev);
 
     (*env)->ReleaseStringUTFChars(env, device_path, devicePath);
 
@@ -323,6 +324,18 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz
     (*env)->ReleaseStringUTFChars(env, device_path, devicePath);
 
     return (jboolean) JNI_FALSE;
+}
+
+void close(JNIEnv *env, rtlsdr_android_t* dev) {
+    rtlsdr_dev_t *device = dev->rtl_dev;
+    dev->rtl_dev = NULL;
+    rtlsdr_close(device);
+    if (dev->maglut != NULL) {
+        free(dev->maglut);
+    }
+    (*env)->DeleteGlobalRef(env, dev->instance);
+    free((void *) dev);
+
 }
 
 JNIEXPORT jlong JNICALL
@@ -341,19 +354,17 @@ JNIEXPORT void JNICALL
 Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_dispose(JNIEnv *env, jobject instance, jlong pointer) {
     WITH_DEV(dev);
     if (dev->rtl_dev != NULL) {
-        rtlsdr_close(dev->rtl_dev);
-        dev->rtl_dev = NULL;
+        rtlsdr_cancel_async(dev->rtl_dev);
     }
-    if (dev->maglut != NULL) {
-        free(dev->maglut);
-    }
-    (*env)->DeleteGlobalRef(env, dev->instance);
-    free((void *) dev);
 }
 
 JNIEXPORT void JNICALL
 Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_close__J(JNIEnv *env, jobject instance,
                                                       jlong pointer) {
+    WITH_DEV(dev);
+    if (dev->rtl_dev != NULL) {
+        rtlsdr_cancel_async(dev->rtl_dev);
+    }
 }
 
 JNIEXPORT jboolean JNICALL

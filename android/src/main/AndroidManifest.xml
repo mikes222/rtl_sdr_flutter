@@ -12,6 +12,11 @@
             android:name="com.mschwartz.rtl_sdr_flutter.UsbService"
             android:foregroundServiceType="connectedDevice"
             android:exported="false" />
+
+        <service
+            android:name="com.mschwartz.rtl_sdr_flutter.SdrService"
+            android:foregroundServiceType="connectedDevice"
+            android:exported="false" />
     </application>
 
 </manifest>

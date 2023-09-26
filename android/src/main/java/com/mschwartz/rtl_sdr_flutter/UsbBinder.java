@@ -26,18 +26,6 @@ class UsbBinder extends Binder {
             usbListener.onUsbDetached();
     }
 
-    public void startWithDevice(SdrDevice sdrDevice, SdrArguments sdrArguments) {
-        Log.appendLine("UsbBinder: startWithDevice");
-        //sdrDevice.addOnStatusListener(onStatusListener);
-        sdrDevice.openAsync(sdrArguments);
-        //service.startForeground();
-    }
-
-    public void stopWithDevice(SdrDevice device) {
-        Log.appendLine("UsbBinder: stopWithDevice");
-        service.stopForeground();
-    }
-
     /////////////////////////////////////////////////////////////////////////////
 
     public interface UsbListener {
