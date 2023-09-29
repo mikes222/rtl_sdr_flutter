@@ -242,7 +242,7 @@ void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void 
 JNIEXPORT jboolean JNICALL
 Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz, jlong pointer,
                                                        jint fd, jint gain, jlong samplingrate,
-                                                       jlong frequency, jint ppm,
+                                                       jlong frequency, jint ppm, int amplitude,
                                                        jstring device_path) {
     WITH_DEV(dev);
     const char *devicePath = (*env)->GetStringUTFChars(env, device_path, 0);
@@ -250,6 +250,9 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz
     rtlsdr_dev_t *device = NULL;
     RUN_OR_GOTO(rtlsdr_open2(&device, fd, devicePath), rel_jni);
 
+    if (amplitude != 0) {
+        prepare_amplitude_calculation(pointer);
+    }
     if (ppm != 0) {
         if (rtlsdr_set_freq_correction(device, ppm) < 0) {
             LOGI("WARNING: Failed to set ppm to %d", ppm);

@@ -33,8 +33,6 @@ public class RtlSdrFlutterPlugin implements FlutterPlugin, ActivityAware {
 
     private Context context;
 
-    private Activity activity;
-
     private BinaryMessenger binaryMessenger;
 
     @Nullable
@@ -45,13 +43,10 @@ public class RtlSdrFlutterPlugin implements FlutterPlugin, ActivityAware {
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         Log.appendLine("onAttachedToEngine");
-        //this.context = flutterPluginBinding.getApplicationContext();
         binaryMessenger = flutterPluginBinding.getBinaryMessenger();
         boolean ok = loadNativeLibraries();
         if (!ok) {
             Log.appendLine("loadNativeLibraries failed");
-            //result.error("hin1", "proble", "proble");
-            return;
         }
     }
 
@@ -65,7 +60,7 @@ public class RtlSdrFlutterPlugin implements FlutterPlugin, ActivityAware {
     public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
         Log.appendLine("onAttachedToActivity");
         context = binding.getActivity().getApplicationContext();
-        activity = binding.getActivity();
+        //activity = binding.getActivity();
         streamHandlerImpl = new StreamHandlerImpl();
         methodHandlerImpl = new MethodHandlerImpl(context, streamHandlerImpl);
         methodChannel = new MethodChannel(binaryMessenger, "rtl_sdr_flutter");
@@ -82,7 +77,7 @@ public class RtlSdrFlutterPlugin implements FlutterPlugin, ActivityAware {
         eventChannel.setStreamHandler(null);
         methodChannel = null;
         eventChannel = null;
-        activity = null;
+        //activity = null;
         context = null;
     }
 

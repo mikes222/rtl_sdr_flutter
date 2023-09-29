@@ -42,23 +42,15 @@ public class SdrArguments implements Serializable {
     private final long frequencyHz;
 	private final int ppm;
 
-    public SdrArguments(int gain, long samplerateHz, long frequencyHz, int ppm) {
+    private final int amplitude;
+
+    public SdrArguments(int gain, long samplerateHz, long frequencyHz, int ppm, int amplitude) {
         this.gain = gain;
         this.samplerateHz = samplerateHz;
         this.frequencyHz = frequencyHz;
         this.ppm = ppm;
+        this.amplitude = amplitude;
     }
-
-    public static SdrArguments fromString(String arguments) throws IllegalArgumentException {
-		return new SdrArguments(new ArgumentParser(arguments));
-	}
-
-	private SdrArguments(ArgumentParser arguments) {
-		this.gain = arguments.getIntArgumentOrDefault("g", DEFAULT_GAIN);
-        this.samplerateHz = arguments.getLongArgumentOrDefault("s", DEFAULT_SAMPLING_RATE);
-        this.frequencyHz = arguments.getLongArgumentOrDefault("f", DEFAULT_FREQUENCY);
-        this.ppm = arguments.getIntArgumentOrDefault("P", DEFAULT_PPM);
-	}
 
     public int getGain() {
         return gain;
@@ -76,4 +68,7 @@ public class SdrArguments implements Serializable {
         return ppm;
     }
 
+    public int getAmplitude() {
+        return amplitude;
+    }
 }

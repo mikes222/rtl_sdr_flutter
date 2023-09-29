@@ -24,6 +24,7 @@ class MethodChannelRtlSdrFlutter extends RtlSdrFlutterPlatform {
     map["gain"] = sdrArguments.gain;
     map["ppm"] = sdrArguments.ppm;
     map["samplerateHz"] = sdrArguments.samplerateHz;
+    map["amplitude"] = sdrArguments.amplitudes ? 1 : 0;
     return await methodChannel.invokeMethod("startServer", [name, map]);
   }
 

@@ -26,13 +26,24 @@ class SdrArguments {
 
   /// gain mode: 0=automatic, else gain in /10th of dB, e.g. 24 = 2.4dB
   final int gain;
+
+  /// the rate of the I/Q samples in Hz
   final int samplerateHz;
+
+  /// The frequency to monitor in Hz
   final int frequencyHz;
+
+  /// The frequency corrections in parts per million
   final int ppm;
 
-  SdrArguments(
-      {this.gain = DEFAULT_GAIN,
-      this.samplerateHz = DEFAULT_SAMPLING_RATE,
-      this.frequencyHz = DEFAULT_FREQUENCY,
-      this.ppm = DEFAULT_PPM});
+  /// true if amplitudes should be sent. Default is false (I/Q pairs)
+  final bool amplitudes;
+
+  SdrArguments({
+    this.gain = DEFAULT_GAIN,
+    this.samplerateHz = DEFAULT_SAMPLING_RATE,
+    this.frequencyHz = DEFAULT_FREQUENCY,
+    this.ppm = DEFAULT_PPM,
+    this.amplitudes = false,
+  });
 }

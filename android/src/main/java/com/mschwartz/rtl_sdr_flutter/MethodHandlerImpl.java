@@ -87,7 +87,7 @@ class MethodHandlerImpl implements MethodCallHandler {
                     ArrayList args = (ArrayList) call.arguments;
                     String name = (String) args.get(0);
                     Map<String, Object> map = (Map<String, Object>) args.get(1);
-                    SdrArguments sdrArguments = new SdrArguments((int) map.get("gain"), (int) map.get("samplerateHz"), (int) map.get("frequencyHz"), (int) map.get("ppm"));
+                    SdrArguments sdrArguments = new SdrArguments((int) map.get("gain"), (int) map.get("samplerateHz"), (int) map.get("frequencyHz"), (int) map.get("ppm"), (int)map.get("amplitude"));
                     SdrDevice device = null;
                     List<SdrDevice> devices = listDevices();
                     for (SdrDevice d : devices) {
