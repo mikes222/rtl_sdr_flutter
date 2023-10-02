@@ -1,18 +1,16 @@
 package com.mschwartz.rtl_sdr_flutter;
 
-import static com.sdrtouch.rtlsdr.SdrDeviceProviderRegistry.SDR_DEVICE_PROVIDERS;
+import static com.mschwartz.rtl_sdr_flutter.SdrDeviceProviderRegistry.SDR_DEVICE_PROVIDERS;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.core.devices.SdrDevice;
-import com.sdrtouch.core.devices.SdrDeviceProvider;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDevice;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDeviceProvider;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -26,7 +24,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 /**
  * This class receives all commands from flutter and processes them.
  */
-class MethodHandlerImpl implements MethodCallHandler {
+public class MethodHandlerImpl implements MethodCallHandler {
 
     @NonNull
     private final Context context;
@@ -260,10 +258,17 @@ class MethodHandlerImpl implements MethodCallHandler {
 
     }
 
+    public void deviceClosed(SdrDevice device) {
+        if (mConnection != null) {
+            mConnection.unbind(context);
+            mConnection = null;
+        }
+    }
+
     private List<SdrDevice> listDevices() {
         List<SdrDevice> availableSdrDevices = new ArrayList<>();
         for (SdrDeviceProvider sdrDeviceProvider : SDR_DEVICE_PROVIDERS) {
-            List<SdrDevice> devicesForProvider = sdrDeviceProvider.listDevices(context, streamHandler, false);
+            List<SdrDevice> devicesForProvider = sdrDeviceProvider.listDevices(context, streamHandler, this,false);
             availableSdrDevices.addAll(devicesForProvider);
             Log.appendLine("%s: found %d device opening options", sdrDeviceProvider.getName(), devicesForProvider.size());
         }

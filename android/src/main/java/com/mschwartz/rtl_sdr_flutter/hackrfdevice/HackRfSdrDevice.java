@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.rtlsdr.hackrf;
+package com.mschwartz.rtl_sdr_flutter.hackrfdevice;
 
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
@@ -26,13 +26,13 @@ import android.hardware.usb.UsbDevice;
 import com.mantz_it.hackrf_android.Hackrf;
 import com.mantz_it.hackrf_android.HackrfCallbackInterface;
 import com.mantz_it.hackrf_android.HackrfUsbException;
+import com.mschwartz.rtl_sdr_flutter.MethodHandlerImpl;
 import com.mschwartz.rtl_sdr_flutter.StreamHandlerImpl;
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.core.devices.SdrDevice;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.SdrArguments;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDevice;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 import java.io.IOException;
-import java.util.List;
 
 public class HackRfSdrDevice extends SdrDevice {
     private final static double BUFF_TIME = 0.1;
@@ -43,8 +43,8 @@ public class HackRfSdrDevice extends SdrDevice {
 
     private final Context context;
 
-    public HackRfSdrDevice(Context context, StreamHandlerImpl streamHandler, UsbDevice device) {
-        super(streamHandler);
+    public HackRfSdrDevice(Context context, StreamHandlerImpl streamHandler, MethodHandlerImpl methodhandler, UsbDevice device) {
+        super(streamHandler, methodhandler);
         this.device = device;
         this.context = context;
     }

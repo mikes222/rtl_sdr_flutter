@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.rtlsdr.hackrf;
+package com.mschwartz.rtl_sdr_flutter.hackrfdevice;
 
 import android.util.SparseArray;
 

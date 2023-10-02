@@ -18,18 +18,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.rtlsdr.driver;
+package com.mschwartz.rtl_sdr_flutter.rtlsdrdevice;
 
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 
+import com.mschwartz.rtl_sdr_flutter.MethodHandlerImpl;
+import com.mschwartz.rtl_sdr_flutter.SdrArguments;
 import com.mschwartz.rtl_sdr_flutter.StreamHandlerImpl;
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.core.devices.SdrDevice;
-import com.sdrtouch.core.exceptions.SdrException;
-import com.sdrtouch.tools.Log;
-import com.sdrtouch.tools.UsbPermissionObtainer;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDevice;
+import com.mschwartz.rtl_sdr_flutter.exceptions.SdrException;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.tools.UsbPermissionObtainer;
 
 import java.util.concurrent.ExecutionException;
 
@@ -41,9 +42,8 @@ public class RtlSdrDevice extends SdrDevice {
 
     private final Context context;
 
-
-    public RtlSdrDevice(Context context, StreamHandlerImpl streamHandler, UsbDevice usbDevice) {
-        super(streamHandler);
+    public RtlSdrDevice(Context context, StreamHandlerImpl streamHandler, MethodHandlerImpl methodhandler, UsbDevice usbDevice) {
+        super(streamHandler, methodhandler);
         this.context = context;
         this.usbDevice = usbDevice;
         this.nativeHandler = initialize();
@@ -51,7 +51,7 @@ public class RtlSdrDevice extends SdrDevice {
 
     @Override
     public void openAsync(final SdrArguments sdrArguments) {
-        new Thread() {
+        Thread thread = new Thread() {
             @Override
             public void run() {
                 try {
@@ -66,13 +66,18 @@ public class RtlSdrDevice extends SdrDevice {
                     announceOnClosed(e);
                 }
             }
-        }.start();
+        };
+        thread.start();
     }
 
     @Override
     public void close() {
-        close(nativeHandler);
+        Log.appendLine("RtlSdrDevice: close");
+        cancelAsync(nativeHandler);
         nativeHandler = null;
+        if (deviceConnection != null)
+            deviceConnection.close();
+        deviceConnection = null;
     }
 
     @Override
@@ -140,7 +145,7 @@ public class RtlSdrDevice extends SdrDevice {
         deviceConnection = UsbPermissionObtainer.obtainFdFor(context, usbDevice).get();
         if (deviceConnection == null) throw new RuntimeException("Could not get a connection");
         int fd = deviceConnection.getFileDescriptor();
-        Log.appendLine("Opening fd " + fd);
+        Log.appendLine("RtlSdrDevice: Opening fd " + fd);
         return fd;
     }
 
@@ -156,7 +161,7 @@ public class RtlSdrDevice extends SdrDevice {
 
     private native long initialize();
 
-    private native void close(long pointer);
+    private native void cancelAsync(long pointer);
 
     private native void dispose(long pointer);
 

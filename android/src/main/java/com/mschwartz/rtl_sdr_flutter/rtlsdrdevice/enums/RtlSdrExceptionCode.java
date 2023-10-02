@@ -18,19 +18,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.core.devices;
+package com.mschwartz.rtl_sdr_flutter.rtlsdrdevice.enums;
 
-import android.content.Context;
+import com.mschwartz.rtl_sdr_flutter.UsedByJni;
+import com.mschwartz.rtl_sdr_flutter.exceptions.SdrException;
 
-import com.mschwartz.rtl_sdr_flutter.StreamHandlerImpl;
+public enum RtlSdrExceptionCode {
+    @UsedByJni rtls_sdr_Success(SdrException.EXIT_OK),
+    @UsedByJni rtls_sdr_Fail(SdrException.EXIT_UNKNOWN);
 
-import java.util.List;
+    private final int code;
 
-public interface SdrDeviceProvider {
+    RtlSdrExceptionCode(int code) {
+        this.code = code;
+    }
 
-	List<SdrDevice> listDevices(Context ctx, StreamHandlerImpl streamHandler, boolean forceRoot);
-
-	String getName();
-
-	boolean loadNativeLibraries();
+    public static int idFromExceptionCode(String exceptionCode) {
+        for (RtlSdrExceptionCode code : values()) {
+            if (code.name().equals(exceptionCode)) return code.code;
+        }
+        return SdrException.EXIT_UNKNOWN;
+    }
 }

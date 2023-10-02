@@ -135,6 +135,8 @@ void rtlsdr_set_gpio_bit(rtlsdr_dev_t *dev, uint8_t gpio, int val);
 
 static int rtlsdr_set_if_freq(rtlsdr_dev_t *dev, uint32_t freq);
 
+void close2(rtlsdr_dev_t *pDev);
+
 /* generic tuner interface functions, shall be moved to the tuner implementations */
 int e4000_init(void *dev) {
     rtlsdr_dev_t *devt = (rtlsdr_dev_t *) dev;
@@ -1389,6 +1391,7 @@ int rtlsdr_get_device_usb_strings(uint32_t index, char *manufact,
                                                product,
                                                serial);
                     libusb_close(devt.devh);
+                    devt.devh = NULL;
                 }
                 break;
             }
@@ -1614,11 +1617,15 @@ int rtlsdr_open(rtlsdr_dev_t **out_dev, uint32_t index) {
     return 0;
     err:
     if (dev) {
-        if (dev->devh)
+        if (dev->devh) {
             libusb_close(dev->devh);
+            dev->devh = NULL;
+        }
 
-        if (dev->ctx)
+        if (dev->ctx) {
             libusb_exit(dev->ctx);
+            dev->ctx = NULL;
+        }
 
         free(dev);
     }
@@ -1627,6 +1634,7 @@ int rtlsdr_open(rtlsdr_dev_t **out_dev, uint32_t index) {
 }
 
 int rtlsdr_close(rtlsdr_dev_t *dev) {
+    fprintf(stdout, "rtlsdr_close jetzt\n");
     if (!dev)
         return -1;
 
@@ -1643,8 +1651,17 @@ int rtlsdr_close(rtlsdr_dev_t *dev) {
         rtlsdr_deinit_baseband(dev);
     }
 
+    close2(dev);
+    free(dev);
+
+    return 0;
+}
+
+void close2(rtlsdr_dev_t *dev) {
+    fprintf(stdout, "close2\n");
     if (dev->devh)
         libusb_release_interface(dev->devh, 0);
+    fprintf(stdout, "close2 release\n");
 
 #ifdef DETACH_KERNEL_DRIVER
     if (dev->driver_active) {
@@ -1654,14 +1671,16 @@ int rtlsdr_close(rtlsdr_dev_t *dev) {
             fprintf(stderr, "Reattaching kernel driver failed!\n");
     }
 #endif
-
-//    if (dev->devh)
-//        libusb_close(dev->devh);
-//    if (dev->ctx)
-//        libusb_exit(dev->ctx);
-    free(dev);
-
-    return 0;
+    if (dev->devh) {
+        libusb_close(dev->devh);
+        dev->devh = NULL;
+    }
+    fprintf(stderr, "close2 close\n");
+    if (dev->ctx) {
+        libusb_exit(dev->ctx);
+        dev->ctx = NULL;
+    }
+    fprintf(stderr, "close2 exit\n");
 }
 
 int rtlsdr_reset_buffer(rtlsdr_dev_t *dev) {
@@ -2169,11 +2188,15 @@ int rtlsdr_open2(rtlsdr_dev_t **out_dev, int fd, const char *devicePath) {
     return 0;
     err:
     if (dev) {
-        if (dev->devh)
+        if (dev->devh) {
             libusb_close(dev->devh);
+            dev->devh = NULL;
+        }
 
-        if (dev->ctx)
+        if (dev->ctx) {
             libusb_exit(dev->ctx);
+            dev->ctx = NULL;
+        }
 
         free(dev);
     }

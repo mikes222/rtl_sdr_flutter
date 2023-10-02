@@ -18,24 +18,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.tools;
-
-import static com.sdrtouch.tools.Check.isTrue;
-
-import com.sdrtouch.core.exceptions.SdrException;
+package com.mschwartz.rtl_sdr_flutter.tools;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * This is a future task that will block until result has been returned
- */
-public class AsyncFuture<V> implements Future<V> {
-    private final Object locker = new Object();
-    private V object;
-    private boolean ready = false;
+public class CompletedFuture<T> implements Future<T> {
+
+    private final T result;
+
+    public CompletedFuture(T result) {
+        this.result = result;
+    }
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
@@ -49,35 +45,16 @@ public class AsyncFuture<V> implements Future<V> {
 
     @Override
     public boolean isDone() {
-        synchronized (locker) {
-            return ready;
-        }
+        return true;
     }
 
     @Override
-    public V get() throws InterruptedException, ExecutionException {
-        synchronized (locker) {
-            locker.wait();
-            return object;
-        }
+    public T get() throws InterruptedException, ExecutionException {
+        return result;
     }
 
     @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        if (unit == null)
-            throw new RuntimeException("unit must not be null");
-        synchronized (locker) {
-            locker.wait(unit.toMillis(timeout));
-            return object;
-        }
-    }
-
-    public void setDone(V object) {
-        synchronized (locker) {
-            isTrue(!this.ready);
-            this.object = object;
-            this.ready = true;
-            locker.notify();
-        }
+    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        return result;
     }
 }

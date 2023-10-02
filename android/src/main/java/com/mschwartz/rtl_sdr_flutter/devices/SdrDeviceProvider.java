@@ -18,19 +18,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.core;
+package com.mschwartz.rtl_sdr_flutter.devices;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import android.content.Context;
 
+import com.mschwartz.rtl_sdr_flutter.MethodHandlerImpl;
+import com.mschwartz.rtl_sdr_flutter.StreamHandlerImpl;
 
-/**
- * Marks methods that are invoked by JNI directly.
- * They should not be renamed or their signature changed.
- */
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR})
-public @interface UsedByJni {
+import java.util.List;
+
+public interface SdrDeviceProvider {
+
+	List<SdrDevice> listDevices(Context ctx, StreamHandlerImpl streamHandler, MethodHandlerImpl methodhandler, boolean forceRoot);
+
+	String getName();
+
+	boolean loadNativeLibraries();
 }

@@ -4,21 +4,19 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDevice;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A service to communicate with a usb device. The service is configured in AndroidManifest.xml
@@ -29,7 +27,7 @@ public class SdrService extends Service {
 
     private final static int ONGOING_NOTIFICATION_ID = 437543912; // random id
 
-    private final Set<SdrBinder> binders = new HashSet<>();
+    private List<SdrDevice> devices = new LinkedList<>();
 
     public SdrService() {
         Log.appendLine("UsbService constructor");
@@ -45,27 +43,39 @@ public class SdrService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         Log.appendLine("SdrService: onBind");
-        SdrBinder binder = new SdrBinder(this);
-        binders.add(binder);
-        start();
-        return binder;
+        return new SdrBinder(this);
 
     }
 
     @Override
+    public boolean onUnbind(Intent intent) {
+        Log.appendLine("SdrService: onUnbind");
+        stop();
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        Log.appendLine("SdrService: onRebind");
+        super.onRebind(intent);
+    }
+
+    @Override
     public void onDestroy() {
+        Log.appendLine("SdrService: onDestroy");
         stop();
         super.onDestroy();
     }
 
-    private void start() {
-    }
-
     private void stop() {
-        binders.clear();
+        for (SdrDevice device : new LinkedList<>(devices)) {
+            Log.appendLine("Stopping " + device);
+            stopWithDevice(device);
+            Log.appendLine("Stopping " + device + " completed.");
+        }
     }
 
-    public void startForeground() {
+     public void startForeground() {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         String NOTIFICATION_CHANNEL_ID = "rtl_sdr";
 
@@ -96,6 +106,19 @@ public class SdrService extends Service {
 
     public void stopForeground() {
         stopForeground(true);
+    }
+
+    public void startWithDevice(SdrDevice sdrDevice, SdrArguments sdrArguments) {
+        Log.appendLine("SdrService: startWithDevice");
+        sdrDevice.openAsync(sdrArguments);
+        devices.add(sdrDevice);
+    }
+
+    public void stopWithDevice(SdrDevice sdrDevice) {
+        Log.appendLine("SdrService: stopWithDevice");
+        sdrDevice.close();
+        devices.remove(sdrDevice);
+        Log.appendLine("SdrService: stopWithDevice done");
     }
 
 

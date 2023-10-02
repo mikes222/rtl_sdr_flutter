@@ -2,11 +2,10 @@ package com.mschwartz.rtl_sdr_flutter;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 class ServiceConnectionImpl implements ServiceConnection {
 

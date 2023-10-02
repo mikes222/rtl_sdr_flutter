@@ -49,7 +49,7 @@ typedef struct rtlsdr_android {
 
 void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void *pointer);
 
-void close(JNIEnv *env, rtlsdr_android_t* dev);
+void closeAsync(JNIEnv *env, rtlsdr_android_t *dev);
 
 #define WITH_DEV(x) rtlsdr_android_t* x = (rtlsdr_android_t*) pointer
 
@@ -240,10 +240,13 @@ void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void 
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz, jlong pointer,
-                                                       jint fd, jint gain, jlong samplingrate,
-                                                       jlong frequency, jint ppm, int amplitude,
-                                                       jstring device_path) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz,
+                                                                         jlong pointer,
+                                                                         jint fd, jint gain,
+                                                                         jlong samplingrate,
+                                                                         jlong frequency, jint ppm,
+                                                                         int amplitude,
+                                                                         jstring device_path) {
     WITH_DEV(dev);
     const char *devicePath = (*env)->GetStringUTFChars(env, device_path, 0);
 
@@ -270,8 +273,6 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz
         } else {
             RUN_OR(EXIT_WRONG_ARGS, goto err);
         }
-    } else {
-        LOGI("Set sampling rate to %lld", samplingrate);
     }
 
     if (frequency < 0 || rtlsdr_set_center_freq(device, (uint32_t) frequency) < 0) {
@@ -289,8 +290,6 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz
 
         if (rtlsdr_set_tuner_gain(device, gain) < 0)
             LOGI("WARNING: Failed to set tuner gain");
-        else
-            LOGI("Tuner gain set to %f dB", gain / 10.0);
     }
 
     if (rtlsdr_reset_buffer(device) < 0)
@@ -314,14 +313,25 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz
 //            jmethodID announceOnClose = (*env)->GetMethodID(env, clazz, "announceOnClose", "()V"));
 //    EXCEPT_DO((*env)->CallVoidMethod(env, thiz, announceOnClose), succesful = 0);
 
-    close(env, dev);
+    device = dev->rtl_dev;
+    dev->rtl_dev = NULL;
+    if (device) {
+        rtlsdr_close(device);
+    }
+    if (dev->maglut != NULL) {
+        free(dev->maglut);
+    }
+    (*env)->DeleteGlobalRef(env, dev->instance);
+    free((void *) dev);
 
     (*env)->ReleaseStringUTFChars(env, device_path, devicePath);
 
     return succesful ? ((jboolean) JNI_TRUE) : ((jboolean) JNI_FALSE);
 
     err:
+
     rtlsdr_close(device);
+    dev->rtl_dev = NULL;
 
     rel_jni:
     (*env)->ReleaseStringUTFChars(env, device_path, devicePath);
@@ -329,20 +339,9 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_openAsync(JNIEnv *env, jobject thiz
     return (jboolean) JNI_FALSE;
 }
 
-void close(JNIEnv *env, rtlsdr_android_t* dev) {
-    rtlsdr_dev_t *device = dev->rtl_dev;
-    dev->rtl_dev = NULL;
-    rtlsdr_close(device);
-    if (dev->maglut != NULL) {
-        free(dev->maglut);
-    }
-    (*env)->DeleteGlobalRef(env, dev->instance);
-    free((void *) dev);
-
-}
-
 JNIEXPORT jlong JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_initialize(JNIEnv *env, jobject instance) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_initialize(JNIEnv *env,
+                                                                          jobject instance) {
 
     rtlsdr_android_t *ptr = malloc(sizeof(rtlsdr_android_t));
     ptr->rtl_dev = NULL;
@@ -354,25 +353,34 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_initialize(JNIEnv *env, jobject ins
 }
 
 JNIEXPORT void JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_dispose(JNIEnv *env, jobject instance, jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_dispose(JNIEnv *env,
+                                                                       jobject instance,
+                                                                       jlong pointer) {
     WITH_DEV(dev);
     if (dev->rtl_dev != NULL) {
-        rtlsdr_cancel_async(dev->rtl_dev);
+        rtlsdr_dev_t *device = dev->rtl_dev;
+        dev->rtl_dev = NULL;
+        rtlsdr_cancel_async(device);
     }
 }
 
 JNIEXPORT void JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_close__J(JNIEnv *env, jobject instance,
-                                                      jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_cancelAsync__J(JNIEnv *env,
+                                                                              jobject instance,
+                                                                              jlong pointer) {
     WITH_DEV(dev);
     if (dev->rtl_dev != NULL) {
-        rtlsdr_cancel_async(dev->rtl_dev);
+        rtlsdr_dev_t *device = dev->rtl_dev;
+        dev->rtl_dev = NULL;
+        rtlsdr_cancel_async(device);
     }
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setFrequency(JNIEnv *env, jobject instance,
-                                                          jlong pointer, jlong frequency) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setFrequency(JNIEnv *env,
+                                                                            jobject instance,
+                                                                            jlong pointer,
+                                                                            jlong frequency) {
     WITH_DEV(dev);
     if (dev->rtl_dev == NULL) return (jboolean) JNI_FALSE;;
 
@@ -387,10 +395,11 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setFrequency(JNIEnv *env, jobject i
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setSamplingrate(__attribute__((unused)) JNIEnv *env,
-                                                             __attribute__((unused)) jobject thiz,
-                                                             jlong pointer,
-                                                             jlong samplingrate) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setSamplingrate(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer,
+        jlong samplingrate) {
     WITH_DEV(dev);
     int result = 0;
     if (samplingrate < 0 ||
@@ -413,10 +422,11 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setSamplingrate(__attribute__((unus
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunergainMode(__attribute__((unused)) JNIEnv *env,
-                                                              __attribute__((unused)) jobject thiz,
-                                                              jlong pointer,
-                                                              jint gain) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setTunergainMode(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer,
+        jint gain) {
     WITH_DEV(dev);
     if (0 == gain) {
         if (rtlsdr_set_tuner_gain_mode(dev->rtl_dev, 0) < 0) {
@@ -440,7 +450,7 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunergainMode(__attribute__((unu
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setFrequencyCorrection(
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setFrequencyCorrection(
         __attribute__((unused)) JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jlong pointer, jint ppm) {
@@ -457,63 +467,69 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setFrequencyCorrection(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTestmode(__attribute__((unused)) JNIEnv *env,
-                                                         __attribute__((unused)) jobject thiz,
-                                                         jlong pointer,
-                                                         jint testmode) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setTestmode(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer,
+        jint testmode) {
     WITH_DEV(dev);
     rtlsdr_set_testmode(dev->rtl_dev, testmode);
     return (jboolean) JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setAgcMode(__attribute__((unused)) JNIEnv *env,
-                                                        __attribute__((unused)) jobject thiz,
-                                                        jlong pointer,
-                                                        jint agcmode) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setAgcMode(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer,
+        jint agcmode) {
     WITH_DEV(dev);
     rtlsdr_set_agc_mode(dev->rtl_dev, agcmode);
     return (jboolean) JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setDirectSampling(__attribute__((unused)) JNIEnv *env,
-                                                               __attribute__((unused)) jobject thiz,
-                                                               jlong pointer, jint directsampling) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setDirectSampling(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer, jint directsampling) {
     WITH_DEV(dev);
     rtlsdr_set_direct_sampling(dev->rtl_dev, directsampling);
     return (jboolean) JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setOffsetTuning(__attribute__((unused)) JNIEnv *env,
-                                                             __attribute__((unused)) jobject thiz,
-                                                             jlong pointer, jint on) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setOffsetTuning(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer, jint on) {
     WITH_DEV(dev);
     rtlsdr_set_offset_tuning(dev->rtl_dev, on);
     return (jboolean) JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setRtlXtalFreq(__attribute__((unused)) JNIEnv *env,
-                                                            __attribute__((unused)) jobject thiz,
-                                                            jlong pointer, jlong frequency) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setRtlXtalFreq(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer, jlong frequency) {
     WITH_DEV(dev);
     rtlsdr_set_xtal_freq(dev->rtl_dev, frequency, 0);
     return (jboolean) JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunerXtalFreq(__attribute__((unused)) JNIEnv *env,
-                                                              __attribute__((unused)) jobject thiz,
-                                                              jlong pointer, jlong frequency) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setTunerXtalFreq(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer, jlong frequency) {
     WITH_DEV(dev);
     rtlsdr_set_xtal_freq(dev->rtl_dev, 0, frequency);
     return (jboolean) JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunerGainByIndex(
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setTunerGainByIndex(
         __attribute__((unused)) JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jlong pointer, jint index) {
@@ -523,7 +539,7 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunerGainByIndex(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunergainByPercentage(
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setTunergainByPercentage(
         __attribute__((unused)) JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jlong pointer, jint percentage) {
@@ -542,9 +558,10 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setTunergainByPercentage(
 //break;
 
 JNIEXPORT jlong JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getRtlXtalFreq(__attribute__((unused)) JNIEnv *env,
-                                                            __attribute__((unused)) jobject thiz,
-                                                            jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getRtlXtalFreq(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     uint32_t rtl_freq;
     uint32_t tuner_freq;
@@ -553,9 +570,10 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getRtlXtalFreq(__attribute__((unuse
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getTunerXtalFreq(__attribute__((unused)) JNIEnv *env,
-                                                              __attribute__((unused)) jobject thiz,
-                                                              jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getTunerXtalFreq(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     uint32_t rtl_freq;
     uint32_t tuner_freq;
@@ -564,9 +582,10 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getTunerXtalFreq(__attribute__((unu
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getManufacturer(__attribute__((unused)) JNIEnv *env,
-                                                             __attribute__((unused)) jobject thiz,
-                                                             jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getManufacturer(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     char manufacturer[256];
     char product[256];
@@ -576,9 +595,10 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getManufacturer(__attribute__((unus
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getProduct(__attribute__((unused)) JNIEnv *env,
-                                                        __attribute__((unused)) jobject thiz,
-                                                        jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getProduct(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     char manufacturer[256];
     char product[256];
@@ -588,9 +608,10 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getProduct(__attribute__((unused)) 
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getSerial(__attribute__((unused)) JNIEnv *env,
-                                                       __attribute__((unused)) jobject thiz,
-                                                       jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getSerial(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     char manufacturer[256];
     char product[256];
@@ -600,15 +621,16 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getSerial(__attribute__((unused)) J
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getFrequency(__attribute__((unused)) JNIEnv *env,
-                                                          __attribute__((unused)) jobject thiz,
-                                                          jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getFrequency(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     return rtlsdr_get_center_freq(dev->rtl_dev);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getFrequencyCorrection(
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getFrequencyCorrection(
         __attribute__((unused)) JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jlong pointer) {
@@ -622,42 +644,49 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getFrequencyCorrection(
 
 
 JNIEXPORT jint JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getTunergain(__attribute__((unused)) JNIEnv *env,
-                                                          __attribute__((unused)) jobject thiz,
-                                                          jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getTunergain(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     return rtlsdr_get_tuner_gain(dev->rtl_dev);
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getSamplingrate(__attribute__((unused)) JNIEnv *env,
-                                                             __attribute__((unused)) jobject thiz,
-                                                             jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getSamplingrate(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     return rtlsdr_get_sample_rate(dev->rtl_dev);
 }
 
 
 JNIEXPORT jint JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_getMargin(__attribute__((unused)) JNIEnv *env,
-                                                       __attribute__((unused)) jobject thiz,
-                                                       jlong pointer) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_getMargin(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer) {
     WITH_DEV(dev);
     return dev->margin;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setMargin(__attribute__((unused)) JNIEnv *env,
-                                                       __attribute__((unused)) jobject thiz,
-                                                       jlong pointer,
-                                                       jint margin) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setMargin(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jlong pointer,
+        jint margin) {
     WITH_DEV(dev);
     dev->margin = margin;
     return JNI_TRUE;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setAmplitude(JNIEnv *env, jobject thiz, jlong pointer, jint on) {
+Java_com_mschwartz_rtl_1sdr_1flutter_rtlsdrdevice_RtlSdrDevice_setAmplitude(JNIEnv *env,
+                                                                            jobject thiz,
+                                                                            jlong pointer,
+                                                                            jint on) {
     WITH_DEV(dev);
     if (on) {
         if (dev->maglut)
@@ -673,3 +702,4 @@ Java_com_sdrtouch_rtlsdr_driver_RtlSdrDevice_setAmplitude(JNIEnv *env, jobject t
         return JNI_FALSE;
     }
 }
+

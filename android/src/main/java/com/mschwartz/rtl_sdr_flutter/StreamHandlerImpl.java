@@ -3,7 +3,7 @@ package com.mschwartz.rtl_sdr_flutter;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 import java.util.HashMap;
 import java.util.Map;

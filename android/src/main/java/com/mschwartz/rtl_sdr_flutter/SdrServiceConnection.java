@@ -2,16 +2,14 @@ package com.mschwartz.rtl_sdr_flutter;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
 import androidx.annotation.NonNull;
 
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.core.devices.SdrDevice;
-import com.sdrtouch.tools.Check;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDevice;
+import com.mschwartz.rtl_sdr_flutter.tools.Check;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 public class SdrServiceConnection implements ServiceConnection {
 
@@ -41,6 +39,7 @@ public class SdrServiceConnection implements ServiceConnection {
     }
 
     public void unbind(Context context) {
+        Log.appendLine("SdrServiceConnection: unbind");
         binder.stopWithDevice(sdrDevice);
         binder = null;
         context.unbindService(this);
@@ -59,5 +58,9 @@ public class SdrServiceConnection implements ServiceConnection {
 
     public @NonNull SdrDevice getSdrDevice() {
         return sdrDevice;
+    }
+
+    public void announceOnClosed(Throwable e) {
+
     }
 }

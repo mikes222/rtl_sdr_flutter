@@ -18,11 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.core;
-
-import static com.sdrtouch.tools.Check.stringLessThan;
-
-import com.sdrtouch.tools.ArgumentParser;
+package com.mschwartz.rtl_sdr_flutter;
 
 import java.io.Serializable;
 

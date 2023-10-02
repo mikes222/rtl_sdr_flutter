@@ -18,25 +18,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.rtlsdr.driver.enums;
+package com.mschwartz.rtl_sdr_flutter.tools;
 
-import com.sdrtouch.core.UsedByJni;
-import com.sdrtouch.core.exceptions.SdrException;
+public class Check {
+	public static void isTrue(boolean condition) {
+		if (!condition) throw new RuntimeException();
+	}
+	
+	public static<T> T isNotNull(T object) {
+		isTrue(object != null);
+		return object;
+	}
+	
+	public static<T> T isNull(T object) {
+		isTrue(object == null);
+		return null;
+	}
 
-public enum RtlSdrExceptionCode {
-    @UsedByJni rtls_sdr_Success(SdrException.EXIT_OK),
-    @UsedByJni rtls_sdr_Fail(SdrException.EXIT_UNKNOWN);
-
-    private final int code;
-
-    RtlSdrExceptionCode(int code) {
-        this.code = code;
-    }
-
-    public static int idFromExceptionCode(String exceptionCode) {
-        for (RtlSdrExceptionCode code : values()) {
-            if (code.name().equals(exceptionCode)) return code.code;
-        }
-        return SdrException.EXIT_UNKNOWN;
-    }
+	public static String stringLessThan(String text, int max_length) {
+		if (text != null && text.length() > max_length) throw new IllegalArgumentException("String cannot exceed "+max_length);
+		return text;
+	}
+	
+	private Check() {}
 }

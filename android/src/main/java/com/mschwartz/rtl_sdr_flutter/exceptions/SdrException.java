@@ -1,6 +1,6 @@
-package com.sdrtouch.core.exceptions;
+package com.mschwartz.rtl_sdr_flutter.exceptions;
 
-import com.sdrtouch.tools.StrRes;
+import com.mschwartz.rtl_sdr_flutter.tools.StrRes;
 
 import com.mschwartz.rtl_sdr_flutter.R;
 

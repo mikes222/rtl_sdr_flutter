@@ -50,7 +50,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     mVM = vm;
 
     initialize(env);
-    logClass = (jclass) (*env)->NewGlobalRef(env, (*env)->FindClass(env, "com/sdrtouch/tools/Log"));
+    logClass = (jclass) (*env)->NewGlobalRef(env, (*env)->FindClass(env, "com/mschwartz/rtl_sdr_flutter/tools/Log"));
     logMethod = (*env)->GetStaticMethodID(env, logClass, "appendLine", "(Ljava/lang/String;)V");
     return JNI_VERSION_1_6;
 }
@@ -74,8 +74,6 @@ static void log(char * text) {
     JNIEnv * env;
     int res = attachThread(&env);
 
-    __android_log_write(ANDROID_LOG_INFO, "SDR", text);
-
     if (env != NULL) {
         jthrowable pendingException = (*env)->ExceptionOccurred(env);
         if (pendingException != NULL) {
@@ -89,6 +87,8 @@ static void log(char * text) {
         if (pendingException != NULL) {
             (*env)->Throw(env, pendingException);
         }
+    } else {
+        __android_log_write(ANDROID_LOG_INFO, "SDR", text);
     }
 
     detatchThread(res);

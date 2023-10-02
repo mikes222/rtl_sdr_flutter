@@ -18,9 +18,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.tools;
+package com.mschwartz.rtl_sdr_flutter.tools;
 
-import com.sdrtouch.core.UsedByJni;
+import com.mschwartz.rtl_sdr_flutter.UsedByJni;
 
 import java.util.HashSet;
 import java.util.Set;

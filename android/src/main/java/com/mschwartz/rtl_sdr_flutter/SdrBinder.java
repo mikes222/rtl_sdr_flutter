@@ -2,29 +2,22 @@ package com.mschwartz.rtl_sdr_flutter;
 
 import android.os.Binder;
 
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.core.devices.SdrDevice;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDevice;
 
 public class SdrBinder extends Binder {
 
-    private SdrService service;
+    private final SdrService sdrService;
 
     public SdrBinder(SdrService service) {
-        this.service = service;
+        this.sdrService = service;
     }
 
     public void startWithDevice(SdrDevice sdrDevice, SdrArguments sdrArguments) {
-        Log.appendLine("SdrBinder: startWithDevice");
-        //sdrDevice.addOnStatusListener(onStatusListener);
-        sdrDevice.openAsync(sdrArguments);
-        //service.startForeground();
+        sdrService.startWithDevice(sdrDevice, sdrArguments);
     }
 
-    public void stopWithDevice(SdrDevice device) {
-        Log.appendLine("SdrBinder: stopWithDevice");
-        device.close();
-        //service.stopForeground();
+    public void stopWithDevice(SdrDevice sdrDevice) {
+        sdrService.stopWithDevice(sdrDevice);
     }
 
 

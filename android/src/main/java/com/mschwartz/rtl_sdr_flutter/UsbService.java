@@ -15,7 +15,7 @@ import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 import java.util.HashSet;
 import java.util.Set;

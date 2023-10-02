@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.tools;
+package com.mschwartz.rtl_sdr_flutter.tools;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

@@ -2,10 +2,6 @@ package com.mschwartz.rtl_sdr_flutter;
 
 import android.os.Binder;
 
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.core.devices.SdrDevice;
-import com.sdrtouch.tools.Log;
-
 class UsbBinder extends Binder {
 
     private final UsbService service;

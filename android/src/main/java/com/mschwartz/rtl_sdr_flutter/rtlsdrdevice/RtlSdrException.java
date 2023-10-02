@@ -18,13 +18,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.rtlsdr.driver;
+package com.mschwartz.rtl_sdr_flutter.rtlsdrdevice;
 
-import com.sdrtouch.rtlsdr.driver.enums.RtlSdrExceptionCode;
+import com.mschwartz.rtl_sdr_flutter.rtlsdrdevice.enums.RtlSdrExceptionCode;
 
-import com.sdrtouch.core.exceptions.SdrException;
-import com.sdrtouch.rtlsdr.driver.enums.RtlSdrExceptionCode;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.exceptions.SdrException;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 public class RtlSdrException extends SdrException {
     public RtlSdrException(String exceptionCode) {

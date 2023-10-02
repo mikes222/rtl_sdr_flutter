@@ -18,21 +18,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.rtlsdr.hackrf;
+package com.mschwartz.rtl_sdr_flutter.hackrfdevice;
 
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_ANDROID_EXIT;
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_ANDROID_GAIN_BY_PERCENTAGE;
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_SET_AGC_MODE;
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_SET_FREQ;
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_SET_GAIN;
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_SET_GAIN_MODE;
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_SET_IF_TUNER_GAIN;
-import static com.sdrtouch.rtlsdr.hackrf.TcpCommand.TCP_SET_SAMPLE_RATE;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_ANDROID_EXIT;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_ANDROID_GAIN_BY_PERCENTAGE;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_SET_AGC_MODE;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_SET_FREQ;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_SET_GAIN;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_SET_GAIN_MODE;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_SET_IF_TUNER_GAIN;
+import static com.mschwartz.rtl_sdr_flutter.hackrfdevice.TcpCommand.TCP_SET_SAMPLE_RATE;
 
 import com.mantz_it.hackrf_android.Hackrf;
 import com.mantz_it.hackrf_android.HackrfUsbException;
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.SdrArguments;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

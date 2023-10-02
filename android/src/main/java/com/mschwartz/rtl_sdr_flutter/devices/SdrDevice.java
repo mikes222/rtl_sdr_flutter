@@ -18,19 +18,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.core.devices;
+package com.mschwartz.rtl_sdr_flutter.devices;
 
-import android.content.Context;
-
+import com.mschwartz.rtl_sdr_flutter.MethodHandlerImpl;
 import com.mschwartz.rtl_sdr_flutter.StreamHandlerImpl;
-import com.sdrtouch.core.SdrArguments;
-import com.sdrtouch.core.UsedByJni;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.SdrArguments;
+import com.mschwartz.rtl_sdr_flutter.UsedByJni;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-
-import kotlin.NotImplementedError;
 
 /**
  * The base class for a device. The implementation could be either [HackRfSdrDevice] or [RtlSdrDevice].
@@ -39,8 +35,11 @@ public abstract class SdrDevice implements Serializable {
 	private static final long serialVersionUID = 6042726358096490615L;
 	protected final StreamHandlerImpl streamHandler;
 
-	protected SdrDevice(StreamHandlerImpl streamHandler) {
+	protected  final MethodHandlerImpl methodhandler;
+
+	protected SdrDevice(StreamHandlerImpl streamHandler, MethodHandlerImpl methodhandler) {
 		this.streamHandler = streamHandler;
+		this.methodhandler = methodhandler;
 	}
 
 	/**
@@ -48,6 +47,8 @@ public abstract class SdrDevice implements Serializable {
 	 * @param e if the rtl-tcp stopped due to an exception or null if it was successful
 	 */
 	protected void announceOnClosed(Throwable e) {
+		Log.appendLine("SdrDevice: announceOnClosed");
+		methodhandler.deviceClosed(this);
 		streamHandler.onDeviceClose();
 	}
 	

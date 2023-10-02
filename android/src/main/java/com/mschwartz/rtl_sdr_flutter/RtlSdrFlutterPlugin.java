@@ -1,16 +1,14 @@
 package com.mschwartz.rtl_sdr_flutter;
 
-import static com.sdrtouch.rtlsdr.SdrDeviceProviderRegistry.SDR_DEVICE_PROVIDERS;
+import static com.mschwartz.rtl_sdr_flutter.SdrDeviceProviderRegistry.SDR_DEVICE_PROVIDERS;
 
-import android.app.Activity;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.sdrtouch.core.devices.SdrDevice;
-import com.sdrtouch.core.devices.SdrDeviceProvider;
-import com.sdrtouch.tools.Log;
+import com.mschwartz.rtl_sdr_flutter.devices.SdrDeviceProvider;
+import com.mschwartz.rtl_sdr_flutter.tools.Log;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;

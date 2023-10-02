@@ -18,27 +18,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.sdrtouch.tools;
+package com.mschwartz.rtl_sdr_flutter;
 
-public class Check {
-	public static void isTrue(boolean condition) {
-		if (!condition) throw new RuntimeException();
-	}
-	
-	public static<T> T isNotNull(T object) {
-		isTrue(object != null);
-		return object;
-	}
-	
-	public static<T> T isNull(T object) {
-		isTrue(object == null);
-		return null;
-	}
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-	public static String stringLessThan(String text, int max_length) {
-		if (text != null && text.length() > max_length) throw new IllegalArgumentException("String cannot exceed "+max_length);
-		return text;
-	}
-	
-	private Check() {}
+
+/**
+ * Marks methods that are invoked by JNI directly.
+ * They should not be renamed or their signature changed.
+ */
+@Retention(RetentionPolicy.SOURCE)
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.CONSTRUCTOR})
+public @interface UsedByJni {
 }
