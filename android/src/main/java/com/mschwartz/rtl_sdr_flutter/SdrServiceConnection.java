@@ -24,7 +24,7 @@ public class SdrServiceConnection implements ServiceConnection {
 
     private SdrBinder binder;
 
-    public  SdrServiceConnection(@NonNull SdrDevice sdrDevice, @NonNull SdrArguments sdrArguments) {
+    public SdrServiceConnection(@NonNull SdrDevice sdrDevice, @NonNull SdrArguments sdrArguments) {
         Check.isNotNull(sdrDevice);
         Check.isNotNull(sdrArguments);
         this.sdrDevice = sdrDevice;
@@ -40,7 +40,8 @@ public class SdrServiceConnection implements ServiceConnection {
 
     public void unbind(Context context) {
         Log.appendLine("SdrServiceConnection: unbind");
-        binder.stopWithDevice(sdrDevice);
+        if (binder != null)
+            binder.stopWithDevice(sdrDevice);
         binder = null;
         context.unbindService(this);
     }

@@ -260,7 +260,8 @@ public class MethodHandlerImpl implements MethodCallHandler {
 
     public void deviceClosed(SdrDevice device) {
         if (mConnection != null) {
-            mConnection.unbind(context);
+            // The service will unbind itself
+            //mConnection.unbind(context);
             mConnection = null;
         }
     }
