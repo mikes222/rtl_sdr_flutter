@@ -53,8 +53,11 @@ public class RtlSdrDeviceProvider implements SdrDeviceProvider {
     @Override
     public boolean loadNativeLibraries() {
         try {
-            System.loadLibrary("rtlSdrAndroid");
+            System.loadLibrary("rtlsdrandroid");
             return true;
+//        } catch (UnsatisfiedLinkError e) {
+//            e.printStackTrace();
+//            return false;
         } catch (Throwable t) {
             t.printStackTrace();
             return false;

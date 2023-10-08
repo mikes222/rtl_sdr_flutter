@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.3.1)
 
-PROJECT( "libusb" C )
-
-FILE ( GLOB_RECURSE SOURCES_LIB "libusb/*.c" )
+PROJECT( "usb" C )
 
 SET ( CMAKE_C_FLAGS         "-Wall" )
 SET ( CMAKE_C_FLAGS_DEBUG   "-g -DDEBUG")
 SET ( CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG" )
+
+FILE ( GLOB_RECURSE SOURCES_LIB "libusb/*.c" )
 
 FIND_LIBRARY( LOG_LIB log )
 

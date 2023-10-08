@@ -38,14 +38,12 @@ public class RtlSdrFlutterPlugin implements FlutterPlugin, ActivityAware {
 
     private MethodHandlerImpl methodHandlerImpl;
 
+    private boolean nativeLoaded = false;
+
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         Log.appendLine("onAttachedToEngine");
         binaryMessenger = flutterPluginBinding.getBinaryMessenger();
-        boolean ok = loadNativeLibraries();
-        if (!ok) {
-            Log.appendLine("loadNativeLibraries failed");
-        }
     }
 
     @Override
@@ -57,6 +55,19 @@ public class RtlSdrFlutterPlugin implements FlutterPlugin, ActivityAware {
     @Override
     public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
         Log.appendLine("onAttachedToActivity");
+
+        if (!nativeLoaded) {
+            nativeLoaded = true;
+            try {
+                boolean ok = loadNativeLibraries();
+                if (!ok) {
+                    Log.appendLine("loadNativeLibraries failed");
+                }
+            } catch (Exception e) {
+                Log.appendLine("loadNativeLibraries failed with " + e);
+            }
+        }
+
         context = binding.getActivity().getApplicationContext();
         //activity = binding.getActivity();
         streamHandlerImpl = new StreamHandlerImpl();

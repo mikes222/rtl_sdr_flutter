@@ -96,16 +96,16 @@ public class SdrService extends Service {
                 .setOngoing(true)
                 .setContentTitle(getText(R.string.app_name));
 
-//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
             builder = builder
-                    .setPriority(Notification.PRIORITY_MAX);
-  //      }
+                    .setPriority(NotificationManager.IMPORTANCE_HIGH);
+        }
 
         startForeground(ONGOING_NOTIFICATION_ID, builder.build());
     }
 
     public void stopForeground() {
-        stopForeground(true);
+        stopForeground(STOP_FOREGROUND_REMOVE);
     }
 
     public void startWithDevice(SdrDevice sdrDevice, SdrArguments sdrArguments) {
