@@ -41,6 +41,7 @@ Note: Find a way to avoid this configuration and create a pullRequest.
 For production use add the following line into ``android/app/proguard-rules.pro``
 
     -keep class com.mschwartz.rtl_sdr_flutter.tools.**  { *; }
+    -keep class com.mschwartz.rtl_sdr_flutter.devices.**  { *; }
 
 Now you can access the device in your flutter widgets:
 

@@ -43,6 +43,18 @@ public class StreamHandlerImpl implements EventChannel.StreamHandler {
         });
     }
 
+    public void sendDataDebug(byte[] data, int dataLength, byte[] debugData) {
+        if (eventSink == null) return;
+        Map<String, Object> map = new HashMap<>();
+        map.put("event", "Data");
+        map.put("content", data);
+        map.put("length", dataLength);
+        map.put("debugContent", debugData);
+        uiThreadHandler.post(() -> {
+            if (eventSink != null) eventSink.success(map);
+        });
+    }
+
     /// sends a notification to flutter if a new device is attached.
     /// [MethodHandlerImpl] binds the UsbService, the UsbService will create a new instance of
     /// UsbBinder and the ServiceConntectionImpl which is created by [MethodHandlerImpl] will

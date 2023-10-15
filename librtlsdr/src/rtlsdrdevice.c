@@ -49,6 +49,8 @@ typedef struct rtlsdr_android {
 
 void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void *pointer);
 
+void send_to_javaDebug(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void *pointer, unsigned char *debugBuf);
+
 void closeAsync(JNIEnv *env, rtlsdr_android_t *dev);
 
 #define WITH_DEV(x) rtlsdr_android_t* x = (rtlsdr_android_t*) pointer
@@ -176,6 +178,7 @@ void rtlsdr_callback(unsigned char *buf, uint32_t len, void *pointer) {
             }
         }
         send_to_java(dev, buf2, len, pointer);
+        //send_to_javaDebug(dev, buf2, len, pointer, buf);
         free(buf2);
         return;
     }
@@ -236,6 +239,29 @@ void send_to_java(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void 
 
     (*env)->CallVoidMethod(env, dev->instance, dataRead, jData, (jint) len);
     (*env)->DeleteLocalRef(env, jData);
+    detatchThread(res);
+}
+
+void send_to_javaDebug(rtlsdr_android_t *dev, unsigned char *buf, uint32_t len, void *pointer, unsigned char *debugBuf) {
+    JNIEnv *env;
+    int res = attachThread(&env);
+
+    jbyteArray jData = (*env)->NewByteArray(env, (jsize) len);
+    if (!jData) return;
+    (*env)->SetByteArrayRegion(env, jData, 0, (jsize) len, (jbyte *) buf);
+
+    jbyteArray jDebugData = (*env)->NewByteArray(env, (jsize) len * 2);
+    if (!jDebugData) return;
+    (*env)->SetByteArrayRegion(env, jDebugData, 0, (jsize) len * 2, (jbyte *) debugBuf);
+
+    jclass clazz = (*env)->GetObjectClass(env, dev->instance);
+    jmethodID dataRead = (*env)->GetMethodID(env, clazz, "dataReceivedDebug", "([BI[B)V");
+
+    (*env)->CallVoidMethod(env, dev->instance, dataRead, jData, (jint) len, jDebugData);
+
+    (*env)->DeleteLocalRef(env, jDebugData);
+    (*env)->DeleteLocalRef(env, jData);
+
     detatchThread(res);
 }
 

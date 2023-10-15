@@ -66,6 +66,12 @@ public abstract class SdrDevice implements Serializable {
 		streamHandler.sendData(data, dataLength);
 	}
 
+	@UsedByJni
+	protected void dataReceivedDebug(byte[] data, int dataLength, byte[] debugData) {
+		//Log.appendLine("data: " + dataLength + " bytes");
+		streamHandler.sendDataDebug(data, dataLength, debugData);
+	}
+
 	/**
 	 * This should return as soon as possible.
 	 * Your implementation should notify the listers asynchronously if this has succeeded or not.
